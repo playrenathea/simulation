@@ -1,11 +1,11 @@
-# dsl.py
+# engine/dsl.py
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import List, Optional, Union, Tuple
 
-from model import Side, Zone, Role, Status, SkillType
+from .model import Side, Zone, Role, Status, SkillType
 
 
 # ----------------------------
@@ -24,7 +24,7 @@ class RoleVariance(StrEnum):
 
 class CountMode(StrEnum):
     CARD = "Card"
-    SKILL = "Skill"   # renamed from Ability; behavior same
+    SKILL = "Skill"
     ROLE = "Role"
 
 
@@ -51,29 +51,8 @@ class Aggregation(StrEnum):
 
 
 # ----------------------------
-# GameState protocol (minimal)
+# CardFilter / Count / Value / Condition
 # ----------------------------
-
-# We keep dsl independent from engine.py implementation details.
-# engine.GameState must provide:
-# - entries: list[CardEntry]
-# - ruleset: Ruleset (for accessors)
-# - players: list[Player]
-# CardEntry must be indexable and expose:
-# - side (int owner index)
-# - zone (Zone)
-# - status (Status|None)
-# - this (int)
-#
-# And state.ruleset must provide methods:
-# - entry_roles(state, entry)
-# - entry_raw_power(state, entry)
-# - entry_skills(state, entry)
-#
-# This mirrors what old CardEntry.get_* provided.
-
-# (No formal Protocol to keep it lightweight / py3.10+ friendly.)
-
 
 @dataclass
 class CardFilter:
@@ -174,7 +153,6 @@ class CardFilter:
         if self.role_variance is None:
             return indices
 
-        # Count roles across selected entries, then filter based on UNIQUE/DUPLICATED membership
         role_counts = {}
         for i in indices:
             for r in state.ruleset.entry_roles(state, state.entries[i]):
@@ -191,10 +169,7 @@ class CardFilter:
         return [i for i in indices if keep_entry(i)]
 
     def evaluate(self, state, you: int, this: int) -> List[int]:
-        # Candidate indices based on subject
         indices = self._matches_subject(this, total=len(state.entries))
-
-        # Apply filters in stable order (mirrors old behavior)
         indices = self._matches_side(state, you, indices)
         indices = self._matches_zone(state, indices)
         indices = self._matches_status(state, indices)
@@ -203,7 +178,6 @@ class CardFilter:
         indices = self._matches_power(state, you, this, indices)
         indices = self._apply_role_variance(state, indices)
 
-        # Exception/exclude filter
         if self.exception is not None:
             excluded = set(self.exception.evaluate(state, you, this))
             indices = [i for i in indices if i not in excluded]
@@ -236,7 +210,6 @@ class Count:
             return total
 
         if self.mode == CountMode.ROLE:
-            # Count role membership, optionally unique/duplicated across selected entries
             roles: List[Role] = []
             for i in indices:
                 roles.extend(state.ruleset.entry_roles(state, state.entries[i]))
@@ -247,13 +220,12 @@ class Count:
             if self.role_variance is None:
                 return len(roles)
 
-            # unique/duplicated role types (not occurrences)
             from collections import Counter
             c = Counter(roles)
             if self.role_variance == RoleVariance.UNIQUE:
-                return sum(1 for r, n in c.items() if n == 1)
+                return sum(1 for _r, n in c.items() if n == 1)
             if self.role_variance == RoleVariance.DUPLICATED:
-                return sum(1 for r, n in c.items() if n >= 2)
+                return sum(1 for _r, n in c.items() if n >= 2)
             return len(roles)
 
         return 0
@@ -305,7 +277,6 @@ class Condition:
             if self.mode == ConditionMode.SINGLE:
                 return left_val == 1
 
-        # Comparison
         if self.mode == ConditionMode.COMPARISON:
             if self.right is None or self.comparison is None:
                 return False
