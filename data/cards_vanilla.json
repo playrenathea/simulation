@@ -1,0 +1,128 @@
+[
+  {
+    "name": "Sentinel",
+    "roles": ["Tank"],
+    "raw_power": 5,
+    "skills": []
+  },
+  {
+    "name": "Ranger",
+    "roles": ["Ranged"],
+    "raw_power": 0,
+    "skills": [
+      { "type": "Powerup", "text": "POWERUP (+9).", "value": 9 }
+    ]
+  },
+  {
+    "name": "Fighter",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      { "type": "Powerup", "text": "POWERUP (+4).", "value": 4 }
+    ]
+  },
+  {
+    "name": "Adventurer",
+    "roles": [],
+    "raw_power": 2,
+    "skills": [
+      { "type": "Powerup", "text": "POWERUP (+6).", "value": 6 }
+    ]
+  },
+  {
+    "name": "Hermit",
+    "roles": [],
+    "raw_power": 0,
+    "skills": [
+      { "type": "Protect", "text": "PROTECT kartu ini!", "target": { "subject": "This" } },
+      { "type": "Powerup", "text": "POWERUP (+7).", "value": 7 }
+    ]
+  },
+  {
+    "name": "Spellshot",
+    "roles": ["Ranged", "Magic"],
+    "raw_power": 1,
+    "skills": [
+      { "type": "Silence", "text": "SILENCE kartu ini!", "target": { "subject": "This" } },
+      { "type": "Powerup", "text": "POWERUP (+8).", "value": 8 }
+    ]
+  },
+  {
+    "name": "Spellblade",
+    "roles": ["Melee", "Magic"],
+    "raw_power": 3,
+    "skills": [
+      { "type": "Silence", "text": "SILENCE kartu ini!", "target": { "subject": "This" } },
+      { "type": "Powerup", "text": "POWERUP (+5).", "value": 5 }
+    ]
+  },
+  {
+    "name": "Knight",
+    "roles": ["Melee", "Tank"],
+    "raw_power": 3,
+    "skills": [
+      { "type": "Protect", "text": "PROTECT kartu ini!", "target": { "subject": "This" } },
+      { "type": "Powerup", "text": "POWERUP (+3).", "value": 3 }
+    ]
+  },
+  {
+    "name": "Witch",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      { "type": "Silence", "text": "SILENCE semua kartu lawan!", "target": { "side": "Opponent", "zones": ["Arena"] } },
+      { "type": "Powerup", "text": "POWERUP (+1).", "value": 1 }
+    ]
+  },
+  {
+    "name": "Warlock",
+    "roles": ["Magic"],
+    "raw_power": 1,
+    "skills": [
+      { "type": "Silence", "text": "SILENCE kartu di seluruh Arena!", "target": { "zones": ["Arena"] } }
+    ]
+  },
+  {
+    "name": "Sorcerer",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      { "type": "Silence", "text": "SILENCE kartu di seluruh Arena!", "target": { "zones": ["Arena"] } },
+      { "type": "Powerup", "text": "POWERUP (+4).", "value": 4 }
+    ]
+  },
+  {
+    "name": "Priest",
+    "roles": ["Support"],
+    "raw_power": 0,
+    "skills": [
+      { "type": "Protect", "text": "PROTECT semua kartu di Arena kamu!", "target": { "side": "You", "zones": ["Arena"] } },
+      { "type": "Powerup", "text": "POWERUP (+1).", "value": 1 }
+    ]
+  },
+  {
+    "name": "Dark Knight",
+    "roles": ["Tank", "Magic"],
+    "raw_power": 6,
+    "skills": [
+      { "type": "Silence", "text": "SILENCE semua kartu di Arena kamu!", "target": { "side": "You", "zones": ["Arena"] } }
+    ]
+  },
+  {
+    "name": "Holy Knight",
+    "roles": ["Tank", "Support"],
+    "raw_power": 6,
+    "skills": [
+      { "type": "Protect", "text": "PROTECT semua kartu di Arena lawan!", "target": { "side": "Opponent", "zones": ["Arena"] } }
+    ]
+  },
+  {
+    "name": "Prisoner",
+    "roles": [],
+    "raw_power": 7,
+    "skills": [
+      { "type": "Protect", "text": "PROTECT semua kartu di Arena lawan!", "target": { "side": "Opponent", "zones": ["Arena"] } },
+      { "type": "Silence", "text": "SILENCE semua kartu di Arena kamu!", "target": { "side": "You", "zones": ["Arena"] } }
+    ]
+  }
+]
