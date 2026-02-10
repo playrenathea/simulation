@@ -1,9 +1,9 @@
-# model.py
+# engine/model.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import List, Optional, Union, Dict, Any
+from typing import List, Optional, Union, Dict, Any, TYPE_CHECKING
 
 
 # ----------------------------
@@ -70,19 +70,18 @@ class Law(StrEnum):
     LAW_CANCEL = "law_cancel"                # cancels law selection
 
 
-# Optional (not used by old engine yet; safe to keep for forward-compat)
 class Passive(StrEnum):
-    # Placeholder; you can extend later without touching engine surface
-    # (kept as enum per your request)
-    # Example ideas:
-    # IGNORE_LAW = "ignore_law"
-    # TOTAL_POWER_PLUS_7 = "total_power_plus_7"
+    # Placeholder for future stages (Passive enum requested)
     _PLACEHOLDER = "placeholder"
 
 
 # ----------------------------
 # Core data classes (no rules)
 # ----------------------------
+
+if TYPE_CHECKING:
+    from .dsl import CardFilter, Count, Value, Condition
+
 
 @dataclass
 class Skill:
@@ -91,22 +90,21 @@ class Skill:
     skill_type: SkillType
     timing: Optional[SkillTiming] = None
 
-    # These mirror old Ability fields; they are interpreted by engine/dsl
+    # These mirror old Ability fields; interpreted by engine/dsl
     value: Optional[Union[int, "Value"]] = None
     target: Optional["CardFilter"] = None
     count: Optional[Union[int, "Count"]] = None
     condition: Optional[Union[bool, "Condition"]] = True
 
-    # Law/Passive payload (enum, as requested)
+    # Law/Passive payload (enum)
     law: Optional[Law] = None
     passive: Optional[Passive] = None
 
-    # Copy payload can be expressed with existing target/filter structure later
-    # (kept in params for future; does not affect current features)
+    # Future-proof params (Copy etc). Not used in Vanilla.
     params: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        # "Validasi ringan" + default timing mapping (same semantics as old notebook)
+        # "Validasi ringan" + default timing mapping (same semantics as notebook)
         if self.timing is None:
             if self.skill_type == SkillType.POWERUP:
                 self.timing = SkillTiming.Power
@@ -150,12 +148,3 @@ class Player:
     def __str__(self) -> str:
         card_names = ", ".join(c.name for c in self.cards)
         return f"{self.name} ({card_names})"
-
-
-# NOTE:
-# The following names are imported by dsl.py via forward refs:
-# - CardFilter, Count, Value, Condition
-# They are defined in dsl.py, but referenced here for typing consistency.
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from dsl import CardFilter, Count, Value, Condition
