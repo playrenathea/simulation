@@ -1,0 +1,222 @@
+[
+  {
+    "name": "Spellbane",
+    "roles": ["Agility"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE Magic dan Support di Arena lawan!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "roles": ["Magic", "Support"]
+        }
+      }
+    ]
+  },
+  {
+    "name": "Samurai",
+    "roles": ["Agility", "Melee"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE Tank, Melee, dan Agility di Arena lawan!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "roles": ["Tank", "Melee", "Agility"]
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4).",
+        "value": 4
+      }
+    ]
+  },
+  {
+    "name": "Templar",
+    "roles": ["Melee", "Support"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE Magic di Arena lawan!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "roles": ["Magic"]
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) per tiap Magic di Arena lawan.",
+        "value": 5,
+        "count": {
+          "mode": "Card",
+          "card_filter": {
+            "side": "Opponent",
+            "zones": ["Arena"],
+            "roles": ["Magic"]
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Rogue",
+    "roles": ["Agility"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE Ranged di Arena lawan!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "roles": ["Ranged"]
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3) per tiap Ranged di Arena lawan.",
+        "value": 3,
+        "count": {
+          "mode": "Card",
+          "card_filter": {
+            "side": "Opponent",
+            "zones": ["Arena"],
+            "roles": ["Ranged"]
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Duelist",
+    "roles": ["Agility", "Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE kartu yang Raw Power-nya 2 atau lebih di Arena lawan!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "power": [">=", 2]
+        }
+      }
+    ]
+  },
+  {
+    "name": "Ninja",
+    "roles": ["Agility"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE kartu yang Raw Power-nya 1 atau kurang di Arena lawan!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "power": ["<=", 1]
+        }
+      }
+    ]
+  },
+  {
+    "name": "Brawler",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) per tiap Melee di Arena lawan.",
+        "value": 5,
+        "count": {
+          "mode": "Card",
+          "card_filter": {
+            "side": "Opponent",
+            "zones": ["Arena"],
+            "roles": ["Melee"]
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Lancer",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) per tiap ability Protect di Arena lawan.",
+        "value": 5,
+        "count": {
+          "mode": "Skill",
+          "card_filter": {
+            "side": "Opponent",
+            "zones": ["Arena"]
+          },
+          "skill_type": "Protect"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Reaver",
+    "roles": ["Agility", "Melee"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) per tiap kartu ter-Silence di Arena lawan.",
+        "value": 4,
+        "count": {
+          "mode": "Card",
+          "card_filter": {
+            "side": "Opponent",
+            "zones": ["Arena"],
+            "status": "Silenced"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Shieldbreaker",
+    "roles": ["Ranged"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) per tiap ability Protect di Arena lawan.",
+        "value": 4,
+        "count": {
+          "mode": "Skill",
+          "card_filter": {
+            "side": "Opponent",
+            "zones": ["Arena"]
+          },
+          "skill_type": "Protect"
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3) per tiap kartu ter-Protect di Arena lawan.",
+        "value": 3,
+        "count": {
+          "mode": "Card",
+          "card_filter": {
+            "side": "Opponent",
+            "zones": ["Arena"],
+            "status": "Protected"
+          }
+        }
+      }
+    ]
+  }
+]
