@@ -1,0 +1,229 @@
+[
+  {
+    "name": "Monk",
+    "roles": ["Melee", "Agility", "Support"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3X) | X = Raw Power kartu ini.",
+        "value": {
+          "aggregation": "total",
+          "card_filter": { "subject": "This" },
+          "multiplier": 3
+        }
+      }
+    ]
+  },
+  {
+    "name": "Beastmaster",
+    "roles": ["Ranged"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+X) | X = Total Raw Power di seluruh Arena.",
+        "value": {
+          "aggregation": "total",
+          "card_filter": { "zones": ["Arena"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Gladiator",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+X) | X = Raw Power tertinggi di Arena lawan.",
+        "value": {
+          "aggregation": "max",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Bounty Hunter",
+    "roles": ["Ranged"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+2X) | X = Raw Power tertinggi di Arena lawan.",
+        "value": {
+          "aggregation": "max",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+          "multiplier": 2
+        }
+      }
+    ]
+  },
+  {
+    "name": "Acolyte",
+    "roles": ["Support"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "PROTECT kartu-kartu yang Raw Power-nya terendah di seluruh Arena!",
+        "target": {
+          "zones": ["Arena"],
+          "power": [
+            "==",
+            { "aggregation": "min", "card_filter": { "zones": ["Arena"] } }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "Custodian",
+    "roles": ["Tank", "Support"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "PROTECT kartu yang Raw Power-nya terendah di Arena kamu!",
+        "target": {
+          "side": "You",
+          "zones": ["Arena"],
+          "power": [
+            "==",
+            {
+              "aggregation": "min",
+              "card_filter": { "side": "You", "zones": ["Arena"] }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+X) | X = Raw Power terendah di Arena kamu.",
+        "value": {
+          "aggregation": "min",
+          "card_filter": { "side": "You", "zones": ["Arena"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Aegis",
+    "roles": ["Support", "Tank"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "PROTECT kartu yang Raw Power-nya tertinggi di Arena kamu!",
+        "target": {
+          "side": "You",
+          "zones": ["Arena"],
+          "power": [
+            "==",
+            {
+              "aggregation": "max",
+              "card_filter": { "side": "You", "zones": ["Arena"] }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+X) | X = Raw Power tertinggi di Arena kamu.",
+        "value": {
+          "aggregation": "max",
+          "card_filter": { "side": "You", "zones": ["Arena"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Swashbuckler",
+    "roles": ["Agility", "Melee"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE kartu yang Raw Power-nya terendah di Arena lawan!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "power": [
+            "==",
+            {
+              "aggregation": "min",
+              "card_filter": { "side": "Opponent", "zones": ["Arena"] }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+X) | X = Raw Power tertinggi di Arena lawan.",
+        "value": {
+          "aggregation": "max",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Dreadnought",
+    "roles": ["Tank", "Melee"],
+    "raw_power": 4,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE kartu-kartu yang Raw Power-nya tertinggi di Arena lawan!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "power": [
+            "==",
+            {
+              "aggregation": "max",
+              "card_filter": { "side": "Opponent", "zones": ["Arena"] }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+X) | X = Raw Power terendah di Arena lawan.",
+        "value": {
+          "aggregation": "min",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Trickster",
+    "roles": ["Agility", "Magic"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE kartu-kartu yang Raw Power-nya terendah di seluruh Arena!",
+        "target": {
+          "zones": ["Arena"],
+          "power": [
+            "==",
+            { "aggregation": "min", "card_filter": { "zones": ["Arena"] } }
+          ]
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4X) | X = Raw Power terendah di seluruh Arena.",
+        "value": {
+          "aggregation": "min",
+          "card_filter": { "zones": ["Arena"] },
+          "multiplier": 4
+        }
+      }
+    ]
+  }
+]
