@@ -8,10 +8,6 @@ from typing import List, Optional, Union, Tuple
 from .model import Side, Zone, Role, Status, SkillType
 
 
-# ----------------------------
-# DSL enums (unchanged meaning)
-# ----------------------------
-
 class Subject(StrEnum):
     THIS = "This"
     OTHER = "Other"
@@ -49,10 +45,6 @@ class Aggregation(StrEnum):
     MAX = "max"
     MIN = "min"
 
-
-# ----------------------------
-# CardFilter / Count / Value / Condition
-# ----------------------------
 
 @dataclass
 class CardFilter:
@@ -104,8 +96,7 @@ class CardFilter:
     def _matches_status(self, state, indices: List[int]) -> List[int]:
         if self.status is None:
             return indices
-        # IMPORTANT: statuses is a set (multi-status)
-        return [i for i in indices if self.status in state.entries[i].statuses]
+        return [i for i in indices if state.entries[i].status == self.status]
 
     def _matches_power(self, state, you: int, this: int, indices: List[int]) -> List[int]:
         if self.power is None:
@@ -154,7 +145,7 @@ class CardFilter:
         if self.role_variance is None:
             return indices
 
-        role_counts = {}
+        role_counts: Dict[Role, int] = {}
         for i in indices:
             for r in state.ruleset.entry_roles(state, state.entries[i]):
                 role_counts[r] = role_counts.get(r, 0) + 1
