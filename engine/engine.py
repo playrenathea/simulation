@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple, Union, Any, Dict, TypedDict
+from typing import List, Optional, Tuple, Union, Any, Dict, TypedDict, Set
 
 from .model import (
     Player, Card, Skill, SkillType, SkillTiming,
@@ -22,7 +22,10 @@ class CardEntry:
     zone: Optional[Zone] = None
     side: int = 0                         # owner index (you=int)
     this: int = 0                         # index in state.entries
-    status: Optional[Status] = None
+
+    # IMPORTANT: multi-status (Protect should not be overwritten by Silence)
+    statuses: Set[Status] = field(default_factory=set)
+
     visibility: List[int] = field(default_factory=list)
 
     # Forward-compatible (not used in Vanilla; does not change behavior)
@@ -72,10 +75,10 @@ class Ruleset:
 
         raw_power = entry.get_card(state).raw_power
 
-        if state.active_law == Law.PROTECTED_2 and entry.status == Status.PROTECTED:
+        if state.active_law == Law.PROTECTED_2 and Status.PROTECTED in entry.statuses:
             raw_power += 2
 
-        if state.active_law == Law.SILENCED_3 and entry.status == Status.SILENCED:
+        if state.active_law == Law.SILENCED_3 and Status.SILENCED in entry.statuses:
             raw_power += 3
 
         return raw_power
@@ -96,10 +99,12 @@ class Ruleset:
         if state.active_law == Law.NO_POWERUP:
             return 0
 
-        if entry.status == Status.SILENCED:
+        # Silenced blocks Powerup (unless future Passive overrides later)
+        if Status.SILENCED in entry.statuses:
             return 0
 
-        if state.active_law == Law.PROTECTED_INVERSE and entry.status == Status.PROTECTED:
+        # Protected inverse law
+        if state.active_law == Law.PROTECTED_INVERSE and Status.PROTECTED in entry.statuses:
             return 0
 
         total = 0
@@ -145,7 +150,11 @@ class Ruleset:
     def apply_active_skill(self, state: "GameState", owner: int, this: int, skill: Skill) -> None:
         """
         Active skills: SILENCE / PROTECT.
-        Applies status to targets.
+        Applies statuses to targets.
+
+        Rule: Protect beats Silence.
+        - If target is Protected, Silence will not apply.
+        - Applying Protect also removes Silence (so Protect "wins" even if applied after).
         """
         if not self._condition_met(state, owner, this, skill):
             return
@@ -155,13 +164,20 @@ class Ruleset:
 
         targets = skill.target.evaluate(state, owner, this)
 
-        if skill.skill_type == SkillType.SILENCE:
+        if skill.skill_type == SkillType.PROTECT:
             for idx in targets:
-                state.entries[idx].status = Status.SILENCED
+                e = state.entries[idx]
+                e.statuses.add(Status.PROTECTED)
+                # Optional but recommended: Protect clears Silence
+                e.statuses.discard(Status.SILENCED)
 
-        elif skill.skill_type == SkillType.PROTECT:
+        elif skill.skill_type == SkillType.SILENCE:
             for idx in targets:
-                state.entries[idx].status = Status.PROTECTED
+                e = state.entries[idx]
+                # Protect blocks Silence
+                if Status.PROTECTED in e.statuses:
+                    continue
+                e.statuses.add(Status.SILENCED)
 
 
 # ----------------------------
