@@ -104,7 +104,8 @@ class CardFilter:
     def _matches_status(self, state, indices: List[int]) -> List[int]:
         if self.status is None:
             return indices
-        return [i for i in indices if state.entries[i].status == self.status]
+        # IMPORTANT: statuses is a set (multi-status)
+        return [i for i in indices if self.status in state.entries[i].statuses]
 
     def _matches_power(self, state, you: int, this: int, indices: List[int]) -> List[int]:
         if self.power is None:
