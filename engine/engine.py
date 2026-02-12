@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple, Union, Any, Dict, TypedDict, Set
+from typing import List, Optional, Tuple, Union, Any, Dict, TypedDict
 
 from .model import (
     Player, Card, Skill, SkillType, SkillTiming,
@@ -23,8 +23,9 @@ class CardEntry:
     side: int = 0                         # owner index (you=int)
     this: int = 0                         # index in state.entries
 
-    # IMPORTANT: multi-status (Protect should not be overwritten by Silence)
-    statuses: Set[Status] = field(default_factory=set)
+    # SINGLE status (Renathea rule)
+    # Protected dominates: once Protected, cannot become Silenced.
+    status: Optional[Status] = None
 
     visibility: List[int] = field(default_factory=list)
 
@@ -75,10 +76,10 @@ class Ruleset:
 
         raw_power = entry.get_card(state).raw_power
 
-        if state.active_law == Law.PROTECTED_2 and Status.PROTECTED in entry.statuses:
+        if state.active_law == Law.PROTECTED_2 and entry.status == Status.PROTECTED:
             raw_power += 2
 
-        if state.active_law == Law.SILENCED_3 and Status.SILENCED in entry.statuses:
+        if state.active_law == Law.SILENCED_3 and entry.status == Status.SILENCED:
             raw_power += 3
 
         return raw_power
@@ -100,11 +101,11 @@ class Ruleset:
             return 0
 
         # Silenced blocks Powerup (unless future Passive overrides later)
-        if Status.SILENCED in entry.statuses:
+        if entry.status == Status.SILENCED:
             return 0
 
         # Protected inverse law
-        if state.active_law == Law.PROTECTED_INVERSE and Status.PROTECTED in entry.statuses:
+        if state.active_law == Law.PROTECTED_INVERSE and entry.status == Status.PROTECTED:
             return 0
 
         total = 0
@@ -149,12 +150,12 @@ class Ruleset:
 
     def apply_active_skill(self, state: "GameState", owner: int, this: int, skill: Skill) -> None:
         """
-        Active skills: SILENCE / PROTECT.
-        Applies statuses to targets.
+        Active skills: SILENCE / PROTECT. Applies status to targets.
 
-        Rule: Protect beats Silence.
-        - If target is Protected, Silence will not apply.
-        - Applying Protect also removes Silence (so Protect "wins" even if applied after).
+        Renathea single-status dominance:
+        - If target is Protected, it cannot become Silenced.
+        - If target is Silenced, it can become Protected (and then becomes Protected).
+        => Protected always wins over Silenced.
         """
         if not self._condition_met(state, owner, this, skill):
             return
@@ -166,18 +167,14 @@ class Ruleset:
 
         if skill.skill_type == SkillType.PROTECT:
             for idx in targets:
-                e = state.entries[idx]
-                e.statuses.add(Status.PROTECTED)
-                # Optional but recommended: Protect clears Silence
-                e.statuses.discard(Status.SILENCED)
+                state.entries[idx].status = Status.PROTECTED
 
         elif skill.skill_type == SkillType.SILENCE:
             for idx in targets:
                 e = state.entries[idx]
-                # Protect blocks Silence
-                if Status.PROTECTED in e.statuses:
-                    continue
-                e.statuses.add(Status.SILENCED)
+                if e.status == Status.PROTECTED:
+                    continue  # Protected blocks Silence
+                e.status = Status.SILENCED
 
 
 # ----------------------------
