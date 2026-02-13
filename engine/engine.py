@@ -389,9 +389,20 @@ def parse_count(data: Any) -> Optional[Union[int, Count]]:
     if isinstance(data, dict):
         from .dsl import CountMode, RoleVariance
         from .model import SkillType
+
+        # Backward-compatible defaults:
+        # - if mode missing -> default Card
+        # - if card_filter missing -> default {} (match all)
+        # - if skill_type present but mode missing -> default Skill
+        mode_str = data.get("mode")
+        if mode_str is None:
+            mode_str = "Skill" if data.get("skill_type") else "Card"
+
+        cf = data.get("card_filter", {}) or {}
+
         return Count(
-            mode=CountMode(data["mode"]),
-            card_filter=parse_card_filter(data["card_filter"]),
+            mode=CountMode(mode_str),
+            card_filter=parse_card_filter(cf),
             skill_type=SkillType(data["skill_type"]) if data.get("skill_type") else None,
             role_variance=RoleVariance(data["role_variance"]) if data.get("role_variance") else None,
         )
