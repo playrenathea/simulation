@@ -1,0 +1,93 @@
+[
+  {
+    "name": "Oracle",
+    "roles": [
+      "Support",
+      "Magic"
+    ],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+6) jika ada lebih banyak role unik di Arena kamu.",
+        "value": 6,
+        "condition": {
+          "mode": "Comparison",
+          "left": {
+            "mode": "Role",
+            "role_variance": "Unique",
+            "card_filter": {
+              "side": "You",
+              "zones": [
+                "Arena"
+              ]
+            }
+          },
+          "right": {
+            "mode": "Role",
+            "role_variance": "Duplicated",
+            "card_filter": {
+              "side": "You",
+              "zones": [
+                "Arena"
+              ]
+            }
+          },
+          "comparison": ">"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Archivist",
+    "roles": [
+      "Support"
+    ],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) jika TIDAK ada role berulang di Arena kamu.",
+        "value": 5,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "card_filter": {
+              "side": "You",
+              "zones": [
+                "Arena"
+              ],
+              "role_variance": "Duplicated"
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Paragon",
+    "roles": [
+      "Tank"
+    ],
+    "raw_power": 4,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3) jika ada role yang unik di Arena kamu.",
+        "value": 3,
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "card_filter": {
+              "side": "You",
+              "zones": [
+                "Arena"
+              ],
+              "role_variance": "Unique"
+            }
+          }
+        }
+      }
+    ]
+  }
+]
