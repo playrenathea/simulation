@@ -10,7 +10,10 @@
         "value": 8,
         "condition": {
           "mode": "Presence",
-          "left": { "card_filter": { "status": "Protected", "subject": "This" } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "status": "Protected", "subject": "This" }
+          }
         }
       }
     ]
@@ -26,7 +29,10 @@
         "value": 8,
         "condition": {
           "mode": "Presence",
-          "left": { "card_filter": { "zones": ["Arena"], "roles": ["Tank"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "zones": ["Arena"], "roles": ["Tank"] }
+          }
         }
       }
     ]
@@ -42,7 +48,10 @@
         "value": 6,
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "status": "Protected", "subject": "This" } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "status": "Protected", "subject": "This" }
+          }
         }
       }
     ]
@@ -59,7 +68,10 @@
         "value": 4,
         "condition": {
           "mode": "Presence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Melee"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Melee"] }
+          }
         }
       }
     ]
@@ -80,7 +92,10 @@
         "value": 7,
         "condition": {
           "mode": "Presence",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Melee"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Melee"] }
+          }
         }
       }
     ]
@@ -96,7 +111,10 @@
         "value": 9,
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Agility"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Agility"] }
+          }
         }
       }
     ]
@@ -117,7 +135,10 @@
         "value": 4,
         "condition": {
           "mode": "Presence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Melee"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Melee"] }
+          }
         }
       }
     ]
@@ -134,7 +155,10 @@
         "value": 4,
         "condition": {
           "mode": "Presence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "skill_types": ["Silence"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "skill_types": ["Silence"] }
+          }
         }
       }
     ]
@@ -150,7 +174,10 @@
         "target": { "side": "Opponent" },
         "condition": {
           "mode": "Presence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic"] }
+          }
         }
       }
     ]
@@ -166,7 +193,10 @@
         "value": 9,
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "skill_types": ["Silence"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "skill_types": ["Silence"] }
+          }
         }
       }
     ]
@@ -182,7 +212,10 @@
         "target": { "side": "Opponent" },
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "zones": ["Arena"], "roles": ["Support"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "zones": ["Arena"], "roles": ["Support"] }
+          }
         }
       }
     ]
@@ -198,7 +231,10 @@
         "target": { "side": "Opponent" },
         "condition": {
           "mode": "Presence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "skill_types": ["Protect"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "skill_types": ["Protect"] }
+          }
         }
       }
     ]
@@ -219,7 +255,10 @@
         "value": 2,
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Magic"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Magic"] }
+          }
         }
       }
     ]
@@ -254,6 +293,7 @@
         "condition": {
           "mode": "Presence",
           "left": {
+            "mode": "Card",
             "card_filter": {
               "side": "You",
               "zones": ["Arena"],
@@ -294,7 +334,10 @@
         "target": { "side": "Opponent" },
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "skill_types": ["Protect"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "skill_types": ["Protect"] }
+          }
         }
       }
     ]
@@ -310,7 +353,10 @@
         "value": 6,
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic"] }
+          }
         }
       },
       {
@@ -319,7 +365,10 @@
         "value": 6,
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Magic"], "subject": "Other" } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Magic"], "subject": "Other" }
+          }
         }
       }
     ]
@@ -335,7 +384,10 @@
         "target": { "side": "Opponent" },
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "skill_types": ["Protect"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "skill_types": ["Protect"] }
+          }
         }
       }
     ]
@@ -350,7 +402,10 @@
         "text": "Jika hanya ada 1 Ranged di Arena kamu, PROTECT kartu tersebut!",
         "condition": {
           "mode": "Single",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Ranged"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Ranged"] }
+          }
         },
         "target": { "side": "You", "zones": ["Arena"], "roles": ["Ranged"] }
       },
@@ -375,7 +430,10 @@
         "text": "Jika ada Agility di Arena lawan, PROTECT Ranged di Arena kamu!",
         "condition": {
           "mode": "Presence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Agility"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Agility"] }
+          }
         },
         "target": { "side": "You", "zones": ["Arena"], "roles": ["Ranged"] }
       },
@@ -401,7 +459,10 @@
         "value": 6,
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Agility"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Agility"] }
+          }
         }
       },
       {
@@ -410,7 +471,10 @@
         "value": 6,
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "skill_types": ["Silence"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "skill_types": ["Silence"] }
+          }
         }
       }
     ]
@@ -425,7 +489,10 @@
         "text": "Jika TIDAK ada Tank lain di Arena kamu, PROTECT kartu ini!",
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "You", "subject": "Other", "zones": ["Arena"], "roles": ["Tank"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "subject": "Other", "zones": ["Arena"], "roles": ["Tank"] }
+          }
         },
         "target": { "subject": "This" }
       },
@@ -435,7 +502,10 @@
         "value": 4,
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Melee"], "subject": "Other" } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Melee"], "subject": "Other" }
+          }
         }
       }
     ]
@@ -450,7 +520,10 @@
         "text": "Jika TIDAK ada ability Silence di Arena kamu, PROTECT semua kartu di Arena kamu!",
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "skill_types": ["Silence"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "skill_types": ["Silence"] }
+          }
         },
         "target": { "side": "You", "zones": ["Arena"] }
       }
@@ -467,7 +540,10 @@
         "target": { "side": "Opponent" },
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "power": [">=", 4] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "power": [">=", 4] }
+          }
         }
       }
     ]
@@ -488,7 +564,10 @@
         "value": 8,
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic", "Support"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic", "Support"] }
+          }
         }
       }
     ]
@@ -503,7 +582,10 @@
         "text": "Jika TIDAK ada ability Protect lain di Arena kamu, PROTECT semua kartu di Arena kamu!",
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "subject": "Other", "skill_types": ["Protect"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "subject": "Other", "skill_types": ["Protect"] }
+          }
         },
         "target": { "side": "You", "zones": ["Arena"] }
       }
@@ -519,7 +601,10 @@
         "text": "Jika hanya ada 1 kartu yang punya ability Powerup di Arena kamu, PROTECT kartu tersebut!",
         "condition": {
           "mode": "Single",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "skill_types": ["Powerup"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "skill_types": ["Powerup"] }
+          }
         },
         "target": { "side": "You", "zones": ["Arena"], "skill_types": ["Powerup"] }
       }
@@ -535,7 +620,10 @@
         "text": "Jika TIDAK ada ability Protect lain di Arena kamu, PROTECT kartu ini!",
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "subject": "Other", "skill_types": ["Protect"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "subject": "Other", "skill_types": ["Protect"] }
+          }
         },
         "target": { "subject": "This" }
       },
@@ -545,7 +633,10 @@
         "value": 7,
         "condition": {
           "mode": "Absence",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "subject": "Other", "skill_types": ["Powerup"] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "subject": "Other", "skill_types": ["Powerup"] }
+          }
         }
       }
     ]
@@ -560,7 +651,10 @@
         "text": "Jika hanya ada 1 kartu yang Raw Power-nya 1 atau kurang di Arena kamu, PROTECT kartu tersebut!",
         "condition": {
           "mode": "Single",
-          "left": { "card_filter": { "side": "You", "zones": ["Arena"], "power": ["<=", 1] } }
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "power": ["<=", 1] }
+          }
         },
         "target": { "side": "You", "zones": ["Arena"], "power": ["<=", 1] }
       }
