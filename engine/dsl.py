@@ -291,7 +291,7 @@ class Condition:
         return False
 
 
-# ---- NEW: logical composition for conditions (AND/OR/NOT) ----
+# ---- logical composition for conditions (AND/OR/NOT) ----
 
 class BoolOp(StrEnum):
     AND = "and"
@@ -313,7 +313,6 @@ class BoolCondition:
         if self.op == BoolOp.OR:
             return any(_eval_condition(x, state, you, this) for x in self.items)
         if self.op == BoolOp.NOT:
-            # NOT uses first item only
             if not self.items:
                 return True
             return not _eval_condition(self.items[0], state, you, this)
@@ -328,7 +327,7 @@ def _eval_condition(x: ConditionLike, state, you: int, this: int) -> bool:
     return x.evaluate(state, you, this)
 
 
-# ---- NEW: Copy skill filter ----
+# ---- Copy skill filter ----
 
 @dataclass
 class SkillFilter:
