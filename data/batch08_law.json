@@ -25,24 +25,6 @@
     ]
   },
   {
-    "name": "Herald",
-    "roles": ["Magic"],
-    "raw_power": 0,
-    "skills": [
-      {
-        "type": "Law",
-        "text": "LAW: Semua kartu dimainkan secara terbuka.",
-        "law": "open_play"
-      },
-      {
-        "type": "Powerup",
-        "text": "POWERUP (+8) jika kamu TIDAK pegang inisiatif.",
-        "value": 8,
-        "condition": false
-      }
-    ]
-  },
-  {
     "name": "Technomancer",
     "roles": ["Magic"],
     "raw_power": 0,
