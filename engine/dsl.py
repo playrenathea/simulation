@@ -3,9 +3,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import List, Optional, Union, Tuple, Dict
+from typing import List, Optional, Union, Tuple, Dict, TYPE_CHECKING
 
 from .model import Side, Zone, Role, Status, SkillType
+
+if TYPE_CHECKING:
+    from .engine import GameState
 
 
 class Subject(StrEnum):
@@ -46,6 +49,12 @@ class Aggregation(StrEnum):
     MIN = "min"
 
 
+class BoolOp(StrEnum):
+    AND = "and"
+    OR = "or"
+    NOT = "not"
+
+
 @dataclass
 class CardFilter:
     side: Optional[Side] = None
@@ -65,7 +74,7 @@ class CardFilter:
             return [i for i in range(total) if i != this]
         return list(range(total))
 
-    def _matches_side(self, state, you: int, indices: List[int]) -> List[int]:
+    def _matches_side(self, state: "GameState", you: int, indices: List[int]) -> List[int]:
         if self.side is None:
             return indices
         if self.side == Side.YOU:
@@ -74,31 +83,30 @@ class CardFilter:
             return [i for i in indices if state.entries[i].side != you]
         return indices
 
-    def _matches_zone(self, state, indices: List[int]) -> List[int]:
+    def _matches_zone(self, state: "GameState", indices: List[int]) -> List[int]:
         if not self.zones:
             return indices
         zones_set = set(self.zones)
         return [i for i in indices if state.entries[i].zone in zones_set]
 
-    def _matches_roles(self, state, indices: List[int]) -> List[int]:
+    def _matches_roles(self, state: "GameState", indices: List[int]) -> List[int]:
         if not self.roles:
             return indices
         roles_set = set(self.roles)
 
         out: List[int] = []
         for i in indices:
-            entry = state.entries[i]
-            entry_roles = state.ruleset.entry_roles(state, entry)
+            entry_roles = state.ruleset.entry_roles(state, state.entries[i])
             if any(r in roles_set for r in entry_roles):
                 out.append(i)
         return out
 
-    def _matches_status(self, state, indices: List[int]) -> List[int]:
+    def _matches_status(self, state: "GameState", indices: List[int]) -> List[int]:
         if self.status is None:
             return indices
         return [i for i in indices if state.entries[i].status == self.status]
 
-    def _matches_power(self, state, you: int, this: int, indices: List[int]) -> List[int]:
+    def _matches_power(self, state: "GameState", you: int, this: int, indices: List[int]) -> List[int]:
         if self.power is None:
             return indices
 
@@ -122,26 +130,24 @@ class CardFilter:
 
         out: List[int] = []
         for i in indices:
-            entry = state.entries[i]
-            lhs = state.ruleset.entry_raw_power(state, entry)
+            lhs = state.ruleset.entry_raw_power(state, state.entries[i])
             if ok(lhs):
                 out.append(i)
         return out
 
-    def _matches_skill_types(self, state, indices: List[int]) -> List[int]:
+    def _matches_skill_types(self, state: "GameState", indices: List[int]) -> List[int]:
         if not self.skill_types:
             return indices
         types_set = set(self.skill_types)
 
         out: List[int] = []
         for i in indices:
-            entry = state.entries[i]
-            skills = state.ruleset.entry_skills(state, entry)
+            skills = state.ruleset.entry_skills(state, state.entries[i])
             if any(s.skill_type in types_set for s in skills):
                 out.append(i)
         return out
 
-    def _apply_role_variance(self, state, indices: List[int]) -> List[int]:
+    def _apply_role_variance(self, state: "GameState", indices: List[int]) -> List[int]:
         if self.role_variance is None:
             return indices
 
@@ -160,7 +166,7 @@ class CardFilter:
 
         return [i for i in indices if keep_entry(i)]
 
-    def evaluate(self, state, you: int, this: int) -> List[int]:
+    def evaluate(self, state: "GameState", you: int, this: int) -> List[int]:
         indices = self._matches_subject(this, total=len(state.entries))
         indices = self._matches_side(state, you, indices)
         indices = self._matches_zone(state, indices)
@@ -184,7 +190,7 @@ class Count:
     skill_type: Optional[SkillType] = None
     role_variance: Optional[RoleVariance] = None
 
-    def evaluate(self, state, you: int, this: int) -> int:
+    def evaluate(self, state: "GameState", you: int, this: int) -> int:
         indices = self.card_filter.evaluate(state, you, this)
 
         if self.mode == CountMode.CARD:
@@ -193,8 +199,7 @@ class Count:
         if self.mode == CountMode.SKILL:
             total = 0
             for i in indices:
-                entry = state.entries[i]
-                skills = state.ruleset.entry_skills(state, entry)
+                skills = state.ruleset.entry_skills(state, state.entries[i])
                 if self.skill_type is None:
                     total += len(skills)
                 else:
@@ -229,7 +234,7 @@ class Value:
     card_filter: CardFilter
     multiplier: int = 1
 
-    def evaluate(self, state, you: int, this: int) -> int:
+    def evaluate(self, state: "GameState", you: int, this: int) -> int:
         indices = self.card_filter.evaluate(state, you, this)
         values = [state.ruleset.entry_raw_power(state, state.entries[i]) for i in indices]
 
@@ -242,6 +247,7 @@ class Value:
             return max(values) * self.multiplier
         if self.aggregation == Aggregation.MIN:
             return min(values) * self.multiplier
+
         return 0
 
 
@@ -252,14 +258,15 @@ class Condition:
     right: Optional[Union[int, Count, Value]] = None
     comparison: Optional[Comparison] = None
 
-    def _eval_side(self, x, state, you: int, this: int) -> int:
+    def _eval_side(self, x, state: "GameState", you: int, this: int) -> int:
         if isinstance(x, (Count, Value)):
             return x.evaluate(state, you, this)
         return int(x)
 
-    def evaluate(self, state, you: int, this: int) -> bool:
+    def evaluate(self, state: "GameState", you: int, this: int) -> bool:
         if self.mode in (ConditionMode.PRESENCE, ConditionMode.ABSENCE, ConditionMode.SINGLE):
             left_val = self._eval_side(self.left, state, you, this)
+
             if self.mode == ConditionMode.PRESENCE:
                 return left_val > 0
             if self.mode == ConditionMode.ABSENCE:
@@ -285,14 +292,8 @@ class Condition:
                 return l == r
             if self.comparison == Comparison.NOT_EQUAL:
                 return l != r
+
         return False
-
-
-# logical conditions
-class BoolOp(StrEnum):
-    AND = "and"
-    OR = "or"
-    NOT = "not"
 
 
 ConditionLike = Union[bool, Condition, "BoolCondition"]
@@ -303,24 +304,36 @@ class BoolCondition:
     op: BoolOp
     items: List[ConditionLike]
 
-    def evaluate(self, state, you: int, this: int) -> bool:
-        if self.op == BoolOp.AND:
-            return all(_eval_condition(x, state, you, this) for x in self.items)
-        if self.op == BoolOp.OR:
-            return any(_eval_condition(x, state, you, this) for x in self.items)
+    def evaluate(self, state: "GameState", you: int, this: int) -> bool:
         if self.op == BoolOp.NOT:
             if not self.items:
                 return True
-            return not _eval_condition(self.items[0], state, you, this)
+            x = self.items[0]
+            if isinstance(x, bool):
+                return not x
+            return not x.evaluate(state, you, this)
+
+        if self.op == BoolOp.AND:
+            for x in self.items:
+                if isinstance(x, bool):
+                    if not x:
+                        return False
+                else:
+                    if not x.evaluate(state, you, this):
+                        return False
+            return True
+
+        if self.op == BoolOp.OR:
+            for x in self.items:
+                if isinstance(x, bool):
+                    if x:
+                        return True
+                else:
+                    if x.evaluate(state, you, this):
+                        return True
+            return False
+
         return False
-
-
-def _eval_condition(x: ConditionLike, state, you: int, this: int) -> bool:
-    if x is None:
-        return True
-    if isinstance(x, bool):
-        return x
-    return x.evaluate(state, you, this)
 
 
 @dataclass
