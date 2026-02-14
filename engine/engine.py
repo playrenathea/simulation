@@ -146,16 +146,25 @@ class Ruleset:
 
     # ---------------------------------------------------------------
 
-    def _condition_met(self, state: "GameState", owner: int, this: int, skill: Skill, entry: Optional[CardEntry] = None) -> bool:
+    def _condition_met(self, state, owner, this, skill, entry=None) -> bool:
         cond = skill.condition
         if cond is None:
             return True
-
-        # Apply REMOVE_TIDAK on condition layer (if law applies to this entry)
+    
+        # Dogmatist: if_fail -> semua kondisi "jika" dianggap gagal
+        # (kita treat: kalau condition itu struktur (Condition/BoolCondition) => fail)
+        if state.active_law == Law.IF_FAIL and entry is not None and not entry.ignore_law:
+            if isinstance(cond, (Condition, BoolCondition)):
+                return False
+            if isinstance(cond, bool):
+                return cond
+            return False
+    
+        # Technomancer: remove_tidak transform
         if state.active_law == Law.REMOVE_TIDAK and entry is not None and not entry.ignore_law:
             if isinstance(cond, (bool, Condition, BoolCondition)):
                 cond = self._remove_tidak_transform(cond)
-
+    
         if isinstance(cond, bool):
             return cond
         return cond.evaluate(state, owner, this)
@@ -176,10 +185,16 @@ class Ruleset:
             return c.evaluate(state, owner, this)
         return int(c)
 
-    def skill_powerup_value(self, state: "GameState", owner: int, this: int, skill: Skill, entry: CardEntry) -> int:
+    def skill_powerup_value(self, state, owner, this, skill, entry):
         if not self._condition_met(state, owner, this, skill, entry=entry):
             return 0
-        value = self._resolve_value(state, owner, this, skill)
+    
+        # Artificer: semua Powerup jadi (+3)
+        if state.active_law == Law.POWERUP_3 and not entry.ignore_law:
+            value = 3
+        else:
+            value = self._resolve_value(state, owner, this, skill)
+    
         count = self._resolve_count(state, owner, this, skill)
         return value * count
 
