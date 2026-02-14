@@ -1,4 +1,3 @@
-# engine/model.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -80,7 +79,7 @@ class Passive(StrEnum):
 # ----------------------------
 
 if TYPE_CHECKING:
-    from .dsl import CardFilter, Count, Value, Condition
+    from .dsl import CardFilter, Count, Value, Condition, LogicCondition
 
 
 @dataclass
@@ -94,7 +93,7 @@ class Skill:
     value: Optional[Union[int, "Value"]] = None
     target: Optional["CardFilter"] = None
     count: Optional[Union[int, "Count"]] = None
-    condition: Optional[Union[bool, "Condition"]] = True
+    condition: Optional[Union[bool, "Condition", "LogicCondition"]] = True
 
     # Law/Passive payload (enum)
     law: Optional[Law] = None
