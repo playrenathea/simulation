@@ -8,7 +8,9 @@ from .model import (
     Player, Card, Skill, SkillType, SkillTiming,
     Zone, Status, Law, Result
 )
-from .dsl import CardFilter, Count, Value, Condition, BoolCondition, BoolOp, ConditionLike, SkillFilter
+from .dsl import (
+    CardFilter, Count, Value, Condition, BoolCondition, BoolOp, ConditionLike, SkillFilter
+)
 
 
 # ----------------------------
@@ -22,10 +24,13 @@ class CardEntry:
     side: int = 0                         # owner index
     this: int = 0                         # index in state.entries
 
+    # SINGLE status (Renathea rule)
+    # Protected dominates: once Protected, cannot become Silenced.
     status: Optional[Status] = None
+
     visibility: List[int] = field(default_factory=list)
 
-    # injected by Copy resolver
+    # Continuous injection (Copy etc.)
     virtual_skills: List[Skill] = field(default_factory=list)
 
     def get_card(self, state: "GameState") -> Card:
@@ -87,9 +92,11 @@ class Ruleset:
         if state.active_law == Law.NO_POWERUP:
             return 0
 
+        # Silenced blocks Powerup
         if entry.status == Status.SILENCED:
             return 0
 
+        # Protected inverse law
         if state.active_law == Law.PROTECTED_INVERSE and entry.status == Status.PROTECTED:
             return 0
 
@@ -137,8 +144,16 @@ class Ruleset:
         return value * count
 
     def apply_active_skill(self, state: "GameState", owner: int, this: int, skill: Skill) -> None:
+        """
+        Active skills: SILENCE / PROTECT. Applies status to targets.
+
+        Renathea dominance:
+        - If target is Protected, it cannot become Silenced.
+        - If target is Silenced, it can become Protected (then becomes Protected).
+        """
         if not self._condition_met(state, owner, this, skill):
             return
+
         if skill.target is None:
             return
 
@@ -172,26 +187,41 @@ class GameState:
 
 class Resolver:
     """
-    Pipeline:
-      1) resolve_continuous()  -> apply Copy (inject virtual_skills), determine active_law
+    Pipeline (Continuous then Active):
+      1) resolve_continuous()  -> recompute Copy (always), determine active_law
       2) apply_active_skills() -> apply SILENCE/PROTECT once
-      3) scoring via ruleset accessors
     """
 
-    def apply_copy_skills(self, state: GameState) -> None:
-        # reset per run
+    def _reset_continuous(self, state: GameState) -> None:
+        state.active_law = None
         for e in state.entries:
             e.virtual_skills = []
 
-        for owner_idx, _player in enumerate(state.players):
+    def _build_copy_virtuals_once(self, state: GameState) -> bool:
+        """
+        Returns True if anything changed (for fixed-point iteration).
+        Renathea rule: Copy cannot copy Copy and cannot copy results of Copy.
+        => sources should effectively be "base skills only".
+        """
+        changed = False
+
+        # snapshot current signatures (very cheap)
+        before: List[Tuple[int, int]] = [
+            (e.this, len(e.virtual_skills)) for e in state.entries
+        ]
+
+        # recompute from scratch each pass
+        for e in state.entries:
+            e.virtual_skills = []
+
+        for owner_idx, _p in enumerate(state.players):
             for entry in state.entries:
                 if entry.zone != Zone.ARENA:
                     continue
                 if entry.side != owner_idx:
                     continue
 
-                base_skills = entry.get_card(state).skills
-                for sk in base_skills:
+                for sk in entry.get_card(state).skills:
                     if sk.skill_type != SkillType.COPY:
                         continue
                     if sk.timing != SkillTiming.Continuous:
@@ -207,10 +237,11 @@ class Resolver:
                     collected: List[Skill] = []
                     for i in source_indices:
                         src_entry = state.entries[i]
-                        src_skills = list(src_entry.get_card(state).skills) + list(src_entry.virtual_skills)
+
+                        # IMPORTANT: base skills only (cannot copy results of copy)
+                        src_skills = list(src_entry.get_card(state).skills)
 
                         for s2 in src_skills:
-                            # implicit Renathea rules:
                             if s2.skill_type == SkillType.COPY:
                                 continue
                             if state.ruleset.is_copied_skill(s2):
@@ -242,12 +273,30 @@ class Resolver:
                         cloned.params["_copied"] = True
                         injected.append(cloned)
 
-                    entry.virtual_skills.extend(injected)
+                    if injected:
+                        entry.virtual_skills.extend(injected)
 
-    def resolve_continuous(self, state: GameState) -> None:
-        # 0) Copy first (so copied Laws count)
-        self.apply_copy_skills(state)
+        after: List[Tuple[int, int]] = [
+            (e.this, len(e.virtual_skills)) for e in state.entries
+        ]
+        changed = (before != after)
+        return changed
 
+    def apply_copy_skills(self, state: GameState) -> None:
+        """
+        Copy is Continuous and should adapt to current game state.
+        We recompute each resolve_continuous(). Fixed-point loop is here for
+        future-proofing (e.g. if someday Copy can depend on something that itself
+        depends on virtual skills). With current rules (no copying copied skills),
+        it stabilizes immediately.
+        """
+        max_iters = 5
+        for _ in range(max_iters):
+            changed = self._build_copy_virtuals_once(state)
+            if not changed:
+                break
+
+    def resolve_active_law(self, state: GameState) -> None:
         laws: List[Law] = []
         for entry in state.entries:
             if entry.zone != Zone.ARENA:
@@ -264,6 +313,11 @@ class Resolver:
 
         if state.active_law == Law.LAW_CANCEL:
             state.active_law = None
+
+    def resolve_continuous(self, state: GameState) -> None:
+        self._reset_continuous(state)
+        self.apply_copy_skills(state)      # Copy FIRST (continuous)
+        self.resolve_active_law(state)     # then Law selection (continuous)
 
     def apply_active_skills(self, state: GameState) -> None:
         for player_idx, _player in enumerate(state.players):
@@ -367,17 +421,6 @@ class RawValue(TypedDict, total=False):
     multiplier: int
 
 
-class RawCondition(TypedDict, total=False):
-    mode: str
-    left: Any
-    right: Any
-    comparison: str
-    # logical forms (optional)
-    and_: List[Any]
-    or_: List[Any]
-    not_: Any
-
-
 class RawSkillFilter(TypedDict, total=False):
     card_filter: RawCardFilter
     include: List[str]
@@ -475,13 +518,15 @@ def parse_condition(data: Any) -> Optional[ConditionLike]:
     if isinstance(data, bool):
         return data
     if isinstance(data, dict):
-        # logical forms (preferred keys in JSON: "and", "or", "not")
+        # logical forms: {"and":[...]} / {"or":[...]} / {"not": ...}
         if "and" in data:
             items = [parse_condition(x) for x in (data.get("and") or [])]
-            return BoolCondition(op=BoolOp.AND, items=[x for x in items if x is not None])
+            items = [x for x in items if x is not None]
+            return BoolCondition(op=BoolOp.AND, items=items)
         if "or" in data:
             items = [parse_condition(x) for x in (data.get("or") or [])]
-            return BoolCondition(op=BoolOp.OR, items=[x for x in items if x is not None])
+            items = [x for x in items if x is not None]
+            return BoolCondition(op=BoolOp.OR, items=items)
         if "not" in data:
             item = parse_condition(data.get("not"))
             return BoolCondition(op=BoolOp.NOT, items=[item] if item is not None else [])
@@ -508,9 +553,11 @@ def parse_skill_filter(data: Any) -> Optional[SkillFilter]:
     if not data or not isinstance(data, dict):
         return None
     from .model import SkillType
+
     cf = parse_card_filter(data.get("card_filter")) or CardFilter()
     inc = data.get("include")
     exc = data.get("exclude")
+
     return SkillFilter(
         card_filter=cf,
         include=[SkillType(x) for x in inc] if inc else None,
