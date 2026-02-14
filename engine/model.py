@@ -44,7 +44,6 @@ class SkillType(StrEnum):
 
 
 class SkillTiming(StrEnum):
-    # As requested (maps to old notebook semantics)
     Continuous = "Continuous"  # Law / Passive / Copy
     Active = "Active"          # Silence / Protect
     Power = "Power"            # Powerup
@@ -57,7 +56,6 @@ class Result(StrEnum):
 
 
 class Law(StrEnum):
-    # Keep identical to notebook (feature parity)
     NO_ROLES = "no_roles"
     NO_SILENCE = "no_silence"
     NO_POWERUP = "no_powerup"
@@ -71,12 +69,11 @@ class Law(StrEnum):
 
 
 class Passive(StrEnum):
-    # Placeholder for future stages
     _PLACEHOLDER = "placeholder"
 
 
 # ----------------------------
-# Core data classes (no rules)
+# Core data classes
 # ----------------------------
 
 if TYPE_CHECKING:
@@ -89,16 +86,14 @@ class Skill:
     skill_type: SkillType
     timing: Optional[SkillTiming] = None
 
-    # DSL-driven fields
     value: Optional[Union[int, "Value"]] = None
     target: Optional["CardFilter"] = None
     count: Optional[Union[int, "Count"]] = None
     condition: Optional["ConditionLike"] = True
 
-    # Copy-only (flat JSON field skill_filter)
+    # Copy: flat JSON field "skill_filter"
     skill_filter: Optional["SkillFilter"] = None
 
-    # Law/Passive payload
     law: Optional[Law] = None
     passive: Optional[Passive] = None
 
@@ -106,7 +101,6 @@ class Skill:
     params: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        # Default timing mapping (same semantics as notebook)
         if self.timing is None:
             if self.skill_type == SkillType.POWERUP:
                 self.timing = SkillTiming.Power
