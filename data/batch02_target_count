@@ -1,0 +1,398 @@
+[
+  {
+    "name": "Arbalist",
+    "roles": ["Ranged"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) per tiap skill Protect di Arena lawan.",
+        "value": 4,
+        "count": {
+          "mode": "Skill",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+          "skill_type": "Protect"
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3) per tiap kartu ter-protect di Arena lawan.",
+        "value": 3,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "status": "Protected" }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Arcane Sniper",
+    "roles": ["Ranged", "Magic"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+2) per tiap skill di Arena lawan.",
+        "value": 2,
+        "count": {
+          "mode": "Skill",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Bowman",
+    "roles": ["Ranged"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) per tiap Tank di seluruh Arena.",
+        "value": 4,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "zones": ["Arena"], "roles": ["Tank"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Brawler",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) per tiap Melee di Arena lawan.",
+        "value": 5,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Melee"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Breaker",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) per tiap skill Protect di Arena lawan.",
+        "value": 5,
+        "count": {
+          "mode": "Skill",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+          "skill_type": "Protect"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Crossbowman",
+    "roles": ["Ranged"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) per tiap skill Protect di Arena lawan.",
+        "value": 4,
+        "count": {
+          "mode": "Skill",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+          "skill_type": "Protect"
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) per tiap Tank di Arena lawan.",
+        "value": 4,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Tank"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Fire Support",
+    "roles": ["Ranged", "Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+2) per tiap kartu ter-protect di seluruh Arena.",
+        "value": 2,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "zones": ["Arena"], "status": "Protected" }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Hexblade",
+    "roles": ["Melee", "Magic"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+2) per tiap kartu ter-silence di seluruh Arena",
+        "value": 2,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "zones": ["Arena"], "status": "Silenced" }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Orb Weaver",
+    "roles": ["Ranged", "Magic", "Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+2) per tiap kartu ter-protect di Arena kamu.",
+        "value": 2,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "You", "zones": ["Arena"], "status": "Protected" }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3) per tiap kartu ter-silence di Arena lawan.",
+        "value": 3,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "status": "Silenced" }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Reaver",
+    "roles": ["Agility", "Melee"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) per tiap kartu ter-silence di Arena lawan.",
+        "value": 4,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "status": "Silenced" }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Rogue",
+    "roles": ["Agility"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE Ranged di Arena lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"], "roles": ["Ranged"] }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3) per tiap Ranged di Arena lawan.",
+        "value": 3,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Ranged"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Savage",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) per tiap skill Silence di Arena lawan.",
+        "value": 5,
+        "count": {
+          "mode": "Skill",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+          "skill_type": "Silence"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Shooter",
+    "roles": ["Ranged"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3) per tiap kartu di Arena lawan.",
+        "value": 3,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Slugger",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) per tiap Melee di Arena lawan.",
+        "value": 4,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Melee"] }
+        }
+      },
+      {
+        "type": "Silence",
+        "text": "SILENCE Melee di Arena lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"], "roles": ["Melee"] }
+      }
+    ]
+  },
+  {
+    "name": "Spellbane",
+    "roles": ["Agility"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE Magic dan Support di Arena lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic", "Support"] }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+2) per tiap Magic atau Support di Arena lawan.",
+        "value": 2,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic", "Support"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Templar",
+    "roles": ["Melee", "Support"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE Magic di Arena lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic"] }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) per tiap Magic di Arena lawan.",
+        "value": 5,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Attendant",
+    "roles": ["Magic", "Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "PROTECT kartu yang Raw Power-nya tertinggi di Arena kamu!",
+        "target": {
+          "side": "You",
+          "zones": ["Arena"],
+          "power": ["==", { "aggregation": "max", "card_filter": { "side": "You", "zones": ["Arena"] } }]
+        }
+      },
+      {
+        "type": "Silence",
+        "text": "SILENCE kartu yang Raw Power-nya tertinggi di Arena lawan!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "power": ["==", { "aggregation": "max", "card_filter": { "side": "Opponent", "zones": ["Arena"] } }]
+        }
+      }
+    ]
+  },
+  {
+    "name": "Duelist",
+    "roles": ["Agility", "Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE kartu yang Raw Power-nya 2 atau lebih di Arena lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"], "power": [">=", 2] }
+      }
+    ]
+  },
+  {
+    "name": "Intercessor",
+    "roles": ["Support", "Tank"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "PROTECT kartu yang ter-silence di Arena kamu!",
+        "target": { "side": "You", "zones": ["Arena"], "status": "Silenced" }
+      }
+    ]
+  },
+  {
+    "name": "Ninja",
+    "roles": ["Agility"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE kartu yang Raw Power-nya 1 atau kurang di Arena lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"], "power": ["<=", 1] }
+      }
+    ]
+  },
+  {
+    "name": "Samurai",
+    "roles": ["Agility", "Melee"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE Tank, Melee, dan Agility di Arena lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"], "roles": ["Tank", "Melee", "Agility"] }
+      },
+      { "type": "Powerup", "text": "POWERUP (+4).", "value": 4 }
+    ]
+  },
+  {
+    "name": "Steward",
+    "roles": ["Tank", "Support"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "PROTECT kartu-kartu yang Raw Power-nya terendah di seluruh Arena!",
+        "target": {
+          "zones": ["Arena"],
+          "power": ["==", { "aggregation": "min", "card_filter": { "zones": ["Arena"] } }]
+        }
+      }
+    ]
+  }
+]
