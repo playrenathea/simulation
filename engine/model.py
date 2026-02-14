@@ -1,3 +1,4 @@
+# engine/model.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -57,20 +58,20 @@ class Result(StrEnum):
 
 class Law(StrEnum):
     # Keep identical to notebook (feature parity)
-    NO_ROLES = "no_roles"                    # affects roles (treated as empty)
-    NO_SILENCE = "no_silence"                # remove Silence skills
-    NO_POWERUP = "no_powerup"                # remove Powerup skills and Powerup calc
-    PROTECTED_INVERSE = "protected_inverse"  # if protected, powerup becomes 0
-    RAW_POWER_0 = "raw_power_0"              # raw power becomes 0
-    PROTECTED_2 = "protected_2"              # +2 raw power if protected
-    SILENCED_3 = "silenced_3"                # +3 raw power if silenced
-    POWER_MAX_15 = "power_max_15"            # cap total power per player
-    POWER_MIN_15 = "power_min_15"            # floor total power per player
-    LAW_CANCEL = "law_cancel"                # cancels law selection
+    NO_ROLES = "no_roles"
+    NO_SILENCE = "no_silence"
+    NO_POWERUP = "no_powerup"
+    PROTECTED_INVERSE = "protected_inverse"
+    RAW_POWER_0 = "raw_power_0"
+    PROTECTED_2 = "protected_2"
+    SILENCED_3 = "silenced_3"
+    POWER_MAX_15 = "power_max_15"
+    POWER_MIN_15 = "power_min_15"
+    LAW_CANCEL = "law_cancel"
 
 
 class Passive(StrEnum):
-    # Placeholder for future stages (Passive enum requested)
+    # Placeholder for future stages
     _PLACEHOLDER = "placeholder"
 
 
@@ -79,31 +80,33 @@ class Passive(StrEnum):
 # ----------------------------
 
 if TYPE_CHECKING:
-    from .dsl import CardFilter, Count, Value, Condition, LogicCondition
+    from .dsl import CardFilter, Count, Value, ConditionLike, SkillFilter
 
 
 @dataclass
 class Skill:
-    # Keep fields aligned to old Ability (feature parity)
     text: str
     skill_type: SkillType
     timing: Optional[SkillTiming] = None
 
-    # These mirror old Ability fields; interpreted by engine/dsl
+    # DSL-driven fields
     value: Optional[Union[int, "Value"]] = None
     target: Optional["CardFilter"] = None
     count: Optional[Union[int, "Count"]] = None
-    condition: Optional[Union[bool, "Condition", "LogicCondition"]] = True
+    condition: Optional["ConditionLike"] = True
 
-    # Law/Passive payload (enum)
+    # Copy-only (flat JSON field skill_filter)
+    skill_filter: Optional["SkillFilter"] = None
+
+    # Law/Passive payload
     law: Optional[Law] = None
     passive: Optional[Passive] = None
 
-    # Future-proof params (Copy etc). Not used in Vanilla.
+    # Internal tags (e.g. mark copied skills)
     params: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        # "Validasi ringan" + default timing mapping (same semantics as notebook)
+        # Default timing mapping (same semantics as notebook)
         if self.timing is None:
             if self.skill_type == SkillType.POWERUP:
                 self.timing = SkillTiming.Power
@@ -112,7 +115,6 @@ class Skill:
             else:
                 self.timing = SkillTiming.Continuous
 
-        # minimal guardrails
         if not isinstance(self.text, str):
             raise TypeError("Skill.text must be a str")
         if not isinstance(self.skill_type, SkillType):
