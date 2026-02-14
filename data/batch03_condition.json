@@ -1,0 +1,931 @@
+[
+  {
+    "name": "Bowmaster",
+    "roles": ["Ranged"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+8) jika ada Tank di Arena lawan.",
+        "value": 8,
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Tank"] }
+          }
+        }
+      },
+      {
+        "type": "Protect",
+        "text": "Jika ada Tank di Arena kamu, PROTECT kartu ini!",
+        "target": { "subject": "This" },
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Tank"] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Bodyguard",
+    "roles": ["Tank"],
+    "raw_power": 4,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "Jika hanya ada 1 kartu yang punya skill Powerup di Arena kamu, PROTECT kartu tersebut!",
+        "target": { "side": "You", "zones": ["Arena"], "skill_types": ["Powerup"] },
+        "condition": {
+          "mode": "Single",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "skill_types": ["Powerup"] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Theurgist",
+    "roles": ["Support", "Magic"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "Jika TIDAK ada skill Protect lain di Arena kamu, PROTECT semua kartu di Arena kamu!",
+        "target": { "side": "You", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "subject": "Other", "side": "You", "zones": ["Arena"] },
+            "skill_type": "Protect"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Shieldmaiden",
+    "roles": ["Tank"],
+    "raw_power": 4,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "Jika hanya ada 1 kartu yang Raw Power-nya 0 di Arena kamu, PROTECT kartu tersebut!",
+        "target": { "side": "You", "zones": ["Arena"], "power": ["==", 0] },
+        "condition": {
+          "mode": "Single",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "power": ["==", 0] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Scoundrel",
+    "roles": ["Agility"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "Jika TIDAK ada Raw Power 4 atau lebih di Arena lawan, SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "power": [">=", 4] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Cleric",
+    "roles": ["Support", "Tank"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "Jika TIDAK ada skill Silence di Arena kamu, PROTECT semua kartu di Arena kamu!",
+        "target": { "side": "You", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "side": "You", "zones": ["Arena"] },
+            "skill_type": "Silence"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Ironclad",
+    "roles": ["Melee", "Tank"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+9) jika TIDAK ada skill Powerup di Arena lawan.",
+        "value": 9,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+            "skill_type": "Powerup"
+          }
+        }
+      },
+      { "type": "Protect", "text": "PROTECT kartu ini!", "target": { "subject": "This" } }
+    ]
+  },
+  {
+    "name": "Craven",
+    "roles": ["Ranged"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+10) jika kartu ini punya Raw Power terendah di seluruh Arena.",
+        "value": 10,
+        "condition": {
+          "mode": "Comparison",
+          "left": { "aggregation": "Min", "card_filter": { "subject": "This" } },
+          "right": { "aggregation": "Min", "card_filter": { "zones": ["Arena"] } },
+          "comparison": "=="
+        }
+      }
+    ]
+  },
+  {
+    "name": "Knave",
+    "roles": ["Agility"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "Jika TIDAK ada skill Protect di Arena lawan, SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+            "skill_type": "Protect"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Paragon",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+6) jika kartu ini punya Raw Power tertinggi di seluruh Arena.",
+        "value": 6,
+        "condition": {
+          "mode": "Comparison",
+          "left": { "aggregation": "Max", "card_filter": { "subject": "This" } },
+          "right": { "aggregation": "Max", "card_filter": { "zones": ["Arena"] } },
+          "comparison": "=="
+        }
+      }
+    ]
+  },
+  {
+    "name": "Heretic",
+    "roles": ["Magic"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "Jika TIDAK ada skill Protect di Arena kamu, SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "side": "You", "zones": ["Arena"] },
+            "skill_type": "Protect"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Medic",
+    "roles": ["Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "PROTECT Melee di Arena kamu!",
+        "target": { "side": "You", "zones": ["Arena"], "roles": ["Melee"] }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+7) jika ada Melee di Arena kamu.",
+        "value": 7,
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Melee"] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Nightblade",
+    "roles": ["Agility"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "Jika ada skill SILENCE lain di Arena kamu, SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "subject": "Other", "side": "You", "zones": ["Arena"] },
+            "skill_type": "Silence"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Alpha",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) jika kartu ini punya Raw Power tertinggi di Arena kamu.",
+        "value": 5,
+        "condition": {
+          "mode": "Comparison",
+          "left": { "aggregation": "Max", "card_filter": { "subject": "This" } },
+          "right": { "aggregation": "Max", "card_filter": { "side": "You", "zones": ["Arena"] } },
+          "comparison": "=="
+        }
+      }
+    ]
+  },
+  {
+    "name": "Brute",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) jika ada skill Silence di Arena lawan.",
+        "value": 4,
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+            "skill_type": "Silence"
+          }
+        }
+      },
+      { "type": "Protect", "text": "PROTECT kartu ini!", "target": { "subject": "This" } }
+    ]
+  },
+  {
+    "name": "Enchanter",
+    "roles": ["Magic"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "Jika TIDAK ada Support di seluruh Arena, SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "zones": ["Arena"], "roles": ["Support"] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Bulldozer",
+    "roles": ["Melee", "Tank"],
+    "raw_power": 4,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "Jika ada skill Protect di Arena lawan, SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+            "skill_type": "Protect"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Enchantress",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "Jika TIDAK ada Support di Arena lawan, SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Support"] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Rascal",
+    "roles": ["Agility"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "Jika TIDAK ada Tank di Arena lawan, SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Tank"] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Gunner",
+    "roles": ["Ranged"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+9) jika TIDAK ada skill Silence di Arena lawan.",
+        "value": 9,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+            "skill_type": "Silence"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Inquisitor",
+    "roles": ["Agility", "Support"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "Jika ada Magic di Arena lawan, SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic"] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Slinger",
+    "roles": ["Ranged"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+9) jika TIDAK ada Agility di Arena lawan.",
+        "value": 9,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Agility"] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Barbarian",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+6) jika kartu ini TIDAK ter-protect.",
+        "value": 6,
+        "condition": {
+          "mode": "Absence",
+          "left": { "mode": "Card", "card_filter": { "subject": "This", "status": "Protected" } }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Archer",
+    "roles": ["Ranged"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+8) jika ada Tank di Arena kamu.",
+        "value": 8,
+        "condition": {
+          "mode": "Presence",
+          "left": { "mode": "Card", "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Tank"] } }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Longbowman",
+    "roles": ["Ranged"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+8) jika kartu ini ter-protect.",
+        "value": 8,
+        "condition": {
+          "mode": "Presence",
+          "left": { "mode": "Card", "card_filter": { "subject": "This", "status": "Protected" } }
+        }
+      }
+    ]
+  },
+
+  {
+    "name": "Saboteur",
+    "roles": ["Agility", "Ranged"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "Jika ada 3 atau lebih skill Powerup di Arena lawan, SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Comparison",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+            "skill_type": "Powerup"
+          },
+          "right": 3,
+          "comparison": ">="
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+2) per tiap skill Powerup di Arena lawan.",
+        "value": 2,
+        "count": {
+          "mode": "Skill",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+          "skill_type": "Powerup"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Cannoneer",
+    "roles": ["Tank", "Ranged"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+7) jika TIDAK ada skill Powerup lain di Arena kamu.",
+        "value": 7,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "subject": "Other", "side": "You", "zones": ["Arena"] },
+            "skill_type": "Powerup"
+          }
+        }
+      },
+      {
+        "type": "Protect",
+        "text": "Jika TIDAK ada skill Protect lain di Arena kamu, PROTECT kartu ini!",
+        "target": { "subject": "This" },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "subject": "Other", "side": "You", "zones": ["Arena"] },
+            "skill_type": "Protect"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Messenger",
+    "roles": ["Support", "Agility"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "Jika ada skill SILENCE di Arena lawan, PROTECT semua kartu di Arena kamu!",
+        "target": { "side": "You", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+            "skill_type": "Silence"
+          }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3) jika ada skill Silence di Arena kamu.",
+        "value": 3,
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "side": "You", "zones": ["Arena"] },
+            "skill_type": "Silence"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Illusionist",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE semua kartu lawan, kecuali Magic dan Support!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "exception": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic", "Support"] }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+10) jika TIDAK ada Magic dan Support di Arena lawan.",
+        "value": 10,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic", "Support"] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Bulwark",
+    "roles": ["Melee", "Tank"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) Jika TIDAK ada Melee lain di Arena kamu.",
+        "value": 4,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "subject": "Other", "side": "You", "zones": ["Arena"], "roles": ["Melee"] }
+          }
+        }
+      },
+      {
+        "type": "Protect",
+        "text": "Jika TIDAK ada Tank lain di Arena kamu, PROTECT kartu ini!",
+        "target": { "subject": "This" },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "subject": "Other", "side": "You", "zones": ["Arena"], "roles": ["Tank"] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Hierophant",
+    "roles": ["Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "Jika ada Magic di Arena lawan, PROTECT semua kartu di Arena kamu!",
+        "target": { "side": "You", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Presence",
+          "left": { "mode": "Card", "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic"] } }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) per tiap Magic di Arena lawan.",
+        "value": 5,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Gunslinger",
+    "roles": ["Ranged"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+7) jika TIDAK ada Agility di Arena lawan.",
+        "value": 7,
+        "condition": {
+          "mode": "Absence",
+          "left": { "mode": "Card", "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Agility"] } }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+7) jika TIDAK ada skill Silence di Arena lawan.",
+        "value": 7,
+        "condition": {
+          "mode": "Absence",
+          "left": { "mode": "Skill", "card_filter": { "side": "Opponent", "zones": ["Arena"] }, "skill_type": "Silence" }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Warden",
+    "roles": ["Tank"],
+    "raw_power": 4,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "Jika ada Agility di Arena lawan, PROTECT Ranged di Arena kamu!",
+        "target": { "side": "You", "zones": ["Arena"], "roles": ["Ranged"] },
+        "condition": {
+          "mode": "Presence",
+          "left": { "mode": "Card", "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Agility"] } }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+1) per tiap Agility di Arena lawan.",
+        "value": 1,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Agility"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Defender",
+    "roles": ["Tank"],
+    "raw_power": 4,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "Jika hanya ada 1 Ranged di Arena kamu, PROTECT kartu tersebut!",
+        "target": { "side": "You", "zones": ["Arena"], "roles": ["Ranged"] },
+        "condition": {
+          "mode": "Single",
+          "left": { "mode": "Card", "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Ranged"] } }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+1) per tiap Ranged di Arena kamu.",
+        "value": 1,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Ranged"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Champion",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) jika TIDAK ada Melee lain di Arena kamu.",
+        "value": 4,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "subject": "Other", "side": "You", "zones": ["Arena"], "roles": ["Melee"] }
+          }
+        }
+      },
+      {
+        "type": "Protect",
+        "text": "Jika ada Support di Arena kamu, PROTECT kartu ini!",
+        "target": { "subject": "This" },
+        "condition": {
+          "mode": "Presence",
+          "left": { "mode": "Card", "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Support"] } }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Magician",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+6) jika TIDAK ada Magic di Arena lawan.",
+        "value": 6,
+        "condition": {
+          "mode": "Absence",
+          "left": { "mode": "Card", "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Magic"] } }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+6) jika TIDAK ada Magic lain di Arena kamu.",
+        "value": 6,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "subject": "Other", "side": "You", "zones": ["Arena"], "roles": ["Magic"] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Synergist",
+    "roles": ["Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) jika ada skill Protect di Arena kamu.",
+        "value": 5,
+        "condition": {
+          "mode": "Presence",
+          "left": { "mode": "Skill", "card_filter": { "side": "You", "zones": ["Arena"] }, "skill_type": "Protect" }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) jika ada skill Silence di Arena kamu.",
+        "value": 5,
+        "condition": {
+          "mode": "Presence",
+          "left": { "mode": "Skill", "card_filter": { "side": "You", "zones": ["Arena"] }, "skill_type": "Silence" }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Iconoclast",
+    "roles": ["Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "PROTECT semua kartu di Arena kamu, kecuali Magic!",
+        "target": {
+          "side": "You",
+          "zones": ["Arena"],
+          "exception": { "side": "You", "zones": ["Arena"], "roles": ["Magic"] }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+2) jika TIDAK ada Magic di Arena kamu.",
+        "value": 2,
+        "condition": {
+          "mode": "Absence",
+          "left": { "mode": "Card", "card_filter": { "side": "You", "zones": ["Arena"], "roles": ["Magic"] } }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Shieldbearer",
+    "roles": ["Tank"],
+    "raw_power": 4,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "Jika hanya ada 1 kartu yang Raw Power-nya 2 atau kurang di Arena kamu, PROTECT kartu tersebut!",
+        "target": { "side": "You", "zones": ["Arena"], "power": ["<=", 2] },
+        "condition": {
+          "mode": "Single",
+          "left": {
+            "mode": "Card",
+            "card_filter": { "side": "You", "zones": ["Arena"], "power": ["<=", 2] }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "War Mage",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+6) jika ada Ranged dan Tank di Arena lawan.",
+        "value": 6,
+        "condition": {
+          "and": [
+            {
+              "mode": "Presence",
+              "left": {
+                "mode": "Card",
+                "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Ranged"] }
+              }
+            },
+            {
+              "mode": "Presence",
+              "left": {
+                "mode": "Card",
+                "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Tank"] }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+6) jika ada skill Powerup dan Protect di Arena lawan.",
+        "value": 6,
+        "condition": {
+          "and": [
+            {
+              "mode": "Presence",
+              "left": {
+                "mode": "Skill",
+                "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+                "skill_type": "Powerup"
+              }
+            },
+            {
+              "mode": "Presence",
+              "left": {
+                "mode": "Skill",
+                "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+                "skill_type": "Protect"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+]
