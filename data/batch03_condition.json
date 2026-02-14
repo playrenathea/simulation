@@ -159,8 +159,8 @@
         "value": 10,
         "condition": {
           "mode": "Comparison",
-          "left": { "aggregation": "Min", "card_filter": { "subject": "This" } },
-          "right": { "aggregation": "Min", "card_filter": { "zones": ["Arena"] } },
+          "left": { "aggregation": "min", "card_filter": { "subject": "This" } },
+          "right": { "aggregation": "min", "card_filter": { "zones": ["Arena"] } },
           "comparison": "=="
         }
       }
@@ -197,8 +197,8 @@
         "value": 6,
         "condition": {
           "mode": "Comparison",
-          "left": { "aggregation": "Max", "card_filter": { "subject": "This" } },
-          "right": { "aggregation": "Max", "card_filter": { "zones": ["Arena"] } },
+          "left": { "aggregation": "max", "card_filter": { "subject": "This" } },
+          "right": { "aggregation": "max", "card_filter": { "zones": ["Arena"] } },
           "comparison": "=="
         }
       }
@@ -279,8 +279,8 @@
         "value": 5,
         "condition": {
           "mode": "Comparison",
-          "left": { "aggregation": "Max", "card_filter": { "subject": "This" } },
-          "right": { "aggregation": "Max", "card_filter": { "side": "You", "zones": ["Arena"] } },
+          "left": { "aggregation": "max", "card_filter": { "subject": "This" } },
+          "right": { "aggregation": "max", "card_filter": { "side": "You", "zones": ["Arena"] } },
           "comparison": "=="
         }
       }
@@ -589,6 +589,63 @@
       }
     ]
   },
+
+  {
+    "name": "War Mage",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+6) jika ada Ranged dan Tank di Arena lawan.",
+        "value": 6,
+        "condition": {
+          "and": [
+            {
+              "mode": "Presence",
+              "left": {
+                "mode": "Card",
+                "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Ranged"] }
+              }
+            },
+            {
+              "mode": "Presence",
+              "left": {
+                "mode": "Card",
+                "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Tank"] }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+6) jika ada skill Powerup dan Protect di Arena lawan.",
+        "value": 6,
+        "condition": {
+          "and": [
+            {
+              "mode": "Presence",
+              "left": {
+                "mode": "Skill",
+                "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+                "skill_type": "Powerup"
+              }
+            },
+            {
+              "mode": "Presence",
+              "left": {
+                "mode": "Skill",
+                "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+                "skill_type": "Protect"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+
   {
     "name": "Illusionist",
     "roles": ["Magic"],
@@ -869,61 +926,6 @@
             "mode": "Card",
             "card_filter": { "side": "You", "zones": ["Arena"], "power": ["<=", 2] }
           }
-        }
-      }
-    ]
-  },
-  {
-    "name": "War Mage",
-    "roles": ["Magic"],
-    "raw_power": 0,
-    "skills": [
-      {
-        "type": "Powerup",
-        "text": "POWERUP (+6) jika ada Ranged dan Tank di Arena lawan.",
-        "value": 6,
-        "condition": {
-          "and": [
-            {
-              "mode": "Presence",
-              "left": {
-                "mode": "Card",
-                "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Ranged"] }
-              }
-            },
-            {
-              "mode": "Presence",
-              "left": {
-                "mode": "Card",
-                "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Tank"] }
-              }
-            }
-          ]
-        }
-      },
-      {
-        "type": "Powerup",
-        "text": "POWERUP (+6) jika ada skill Powerup dan Protect di Arena lawan.",
-        "value": 6,
-        "condition": {
-          "and": [
-            {
-              "mode": "Presence",
-              "left": {
-                "mode": "Skill",
-                "card_filter": { "side": "Opponent", "zones": ["Arena"] },
-                "skill_type": "Powerup"
-              }
-            },
-            {
-              "mode": "Presence",
-              "left": {
-                "mode": "Skill",
-                "card_filter": { "side": "Opponent", "zones": ["Arena"] },
-                "skill_type": "Protect"
-              }
-            }
-          ]
         }
       }
     ]
