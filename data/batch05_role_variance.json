@@ -1,0 +1,180 @@
+[
+  {
+    "name": "Coordinator",
+    "roles": ["Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "Jika TIDAK ada role berulang di Arena kamu, PROTECT semua kartu di Arena kamu!",
+        "target": { "side": "You", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Role",
+            "card_filter": { "side": "You", "zones": ["Arena"] },
+            "role_variance": "Duplicated"
+          }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+1) per tiap role unik di Arena kamu.",
+        "value": 1,
+        "count": {
+          "mode": "Role",
+          "card_filter": { "side": "You", "zones": ["Arena"] },
+          "role_variance": "Unique"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Planner",
+    "roles": ["Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Protect",
+        "text": "Jika TIDAK ada role berulang di Arena kamu, PROTECT kartu lain di Arena kamu!",
+        "target": { "subject": "Other", "side": "You", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Role",
+            "card_filter": { "side": "You", "zones": ["Arena"] },
+            "role_variance": "Duplicated"
+          }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+2) per tiap role unik di Arena kamu.",
+        "value": 2,
+        "count": {
+          "mode": "Role",
+          "card_filter": { "side": "You", "zones": ["Arena"] },
+          "role_variance": "Unique"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Analyst",
+    "roles": ["Magic", "Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "SILENCE kartu yang role-nya berulang di Arena lawan!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "role_variance": "Duplicated"
+        }
+      },
+      {
+        "type": "Protect",
+        "text": "Jika TIDAK ada role berulang di Arena kamu, PROTECT semua kartu di Arena kamu!",
+        "target": { "side": "You", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Role",
+            "card_filter": { "side": "You", "zones": ["Arena"] },
+            "role_variance": "Duplicated"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Exploiter",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Silence",
+        "text": "Jika ada role berulang di Arena lawan, SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] },
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Role",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+            "role_variance": "Duplicated"
+          }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+10) jika ada Role berulang di Arena lawan.",
+        "value": 10,
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Role",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+            "role_variance": "Duplicated"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Strategist",
+    "roles": ["Support", "Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+7) jika ada lebih banyak role unik di Arena kamu.",
+        "value": 7,
+        "condition": {
+          "mode": "Comparison",
+          "left": {
+            "mode": "Role",
+            "card_filter": { "side": "You", "zones": ["Arena"] },
+            "role_variance": "Unique"
+          },
+          "right": {
+            "mode": "Role",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+            "role_variance": "Unique"
+          },
+          "comparison": ">"
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+7) jika ada role berulang di Arena lawan.",
+        "value": 7,
+        "condition": {
+          "mode": "Presence",
+          "left": {
+            "mode": "Role",
+            "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+            "role_variance": "Duplicated"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Tactician",
+    "roles": [],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3) per tiap role unik di Arena kamu.",
+        "value": 3,
+        "count": {
+          "mode": "Role",
+          "card_filter": { "side": "You", "zones": ["Arena"] },
+          "role_variance": "Unique"
+        }
+      }
+    ]
+  }
+]
