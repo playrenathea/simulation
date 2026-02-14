@@ -1,0 +1,260 @@
+[
+  {
+    "name": "Maledictor",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Semua kartu TIDAK punya role.",
+        "law": "no_roles"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+7) jika TIDAK ada role berulang di Arena kamu.",
+        "value": 7,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Role",
+            "card_filter": { "side": "You", "zones": ["Arena"] },
+            "role_variance": "Duplicated"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Herald",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Semua kartu dimainkan secara terbuka.",
+        "law": "open_play"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+8) jika kamu TIDAK pegang inisiatif.",
+        "value": 8,
+        "condition": false
+      }
+    ]
+  },
+  {
+    "name": "Technomancer",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Hapus kata \"TIDAK\" dari semua teks skill.",
+        "law": "remove_tidak"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+9) jika TIDAK ada skill Powerup lain di Arena kamu.",
+        "value": 9,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Skill",
+            "card_filter": { "subject": "Other", "side": "You", "zones": ["Arena"] },
+            "skill_type": "Powerup"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Artificer",
+    "roles": ["Support", "Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Semua skill Powerup menjadi (+3) dengan teks yang sama.",
+        "law": "powerup_3"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+0) per tiap kartu di Arena kamu.",
+        "value": 0,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "side": "You", "zones": ["Arena"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Bishop",
+    "roles": ["Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: TIDAK ada skill Silence.",
+        "law": "no_silence"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3) per tiap skill Protect di seluruh Arena.",
+        "value": 3,
+        "count": {
+          "mode": "Skill",
+          "card_filter": { "zones": ["Arena"] },
+          "skill_type": "Protect"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Blood Mage",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Semua kartu punya Raw Power 0.",
+        "law": "raw_power_0"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) per tiap Tank di seluruh Arena.",
+        "value": 4,
+        "count": {
+          "mode": "Card",
+          "card_filter": { "zones": ["Arena"], "roles": ["Tank"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Outlaw",
+    "roles": ["Agility", "Ranged"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Batalkan semua skill Law.",
+        "law": "law_cancel"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+4) per tiap skill Law di seluruh Arena.",
+        "value": 4,
+        "count": {
+          "mode": "Skill",
+          "card_filter": { "zones": ["Arena"] },
+          "skill_type": "Law"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Arbitrator",
+    "roles": [],
+    "raw_power": 4,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Total power maksimal masing-masing pemain adalah 15.",
+        "law": "power_max_15"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+2).",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "name": "Battle Mage",
+    "roles": ["Magic", "Melee"],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: TIDAK ada skill Powerup.",
+        "law": "no_powerup"
+      }
+    ]
+  },
+  {
+    "name": "Dogmatist",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Syarat \"jika\" pada skill TIDAK terpenuhi.",
+        "law": "if_fail"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+6).",
+        "value": 6
+      }
+    ]
+  },
+  {
+    "name": "Proctor",
+    "roles": [],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Total power minimal masing-masing pemain adalah 15.",
+        "law": "power_min_15"
+      },
+      {
+        "type": "Silence",
+        "text": "SILENCE semua kartu lawan!",
+        "target": { "side": "Opponent", "zones": ["Arena"] }
+      }
+    ]
+  },
+  {
+    "name": "Shadow Mage",
+    "roles": ["Magic"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Kartu yang ter-protect TIDAK dapat mengaktifkan skill Powerup.",
+        "law": "protected_inverse"
+      }
+    ]
+  },
+  {
+    "name": "Herbalist",
+    "roles": ["Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Kartu yang ter-protect mendapatkan Raw Power +2.",
+        "law": "protected_2"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+2).",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "name": "Medium",
+    "roles": ["Magic"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Law",
+        "text": "LAW: Kartu yang ter-silence mendapatkan Raw Power +3.",
+        "law": "silenced_3"
+      }
+    ]
+  }
+]
