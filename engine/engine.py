@@ -1,3 +1,4 @@
+# engine/engine.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,7 +8,7 @@ from .model import (
     Player, Card, Skill, SkillType, SkillTiming,
     Zone, Status, Law, Result
 )
-from .dsl import CardFilter, Count, Value, Condition
+from .dsl import CardFilter, Count, Value, Condition, BoolCondition, BoolOp, ConditionLike, SkillFilter
 
 
 # ----------------------------
@@ -16,19 +17,15 @@ from .dsl import CardFilter, Count, Value, Condition
 
 @dataclass
 class CardEntry:
-    # Same pointer approach as notebook (feature parity)
     card: Tuple[int, int]                 # (player_index, card_index)
     zone: Optional[Zone] = None
-    side: int = 0                         # owner index (you=int)
+    side: int = 0                         # owner index
     this: int = 0                         # index in state.entries
 
-    # SINGLE status (Renathea rule)
-    # Protected dominates: once Protected, cannot become Silenced.
     status: Optional[Status] = None
-
     visibility: List[int] = field(default_factory=list)
 
-    # Forward-compatible (not used in Vanilla; does not change behavior)
+    # injected by Copy resolver
     virtual_skills: List[Skill] = field(default_factory=list)
 
     def get_card(self, state: "GameState") -> Card:
@@ -52,18 +49,10 @@ class CardEntry:
 
 
 # ----------------------------
-# Ruleset (global rules live here)
+# Ruleset
 # ----------------------------
 
 class Ruleset:
-    """
-    Feature parity goal:
-    - Implement the exact global-law behaviors from the notebook, but centralized.
-    - CardEntry delegates to Ruleset.
-    """
-
-    # ---- Core accessors ----
-
     def entry_roles(self, state: "GameState", entry: CardEntry):
         if state.active_law == Law.NO_ROLES:
             return []
@@ -84,7 +73,6 @@ class Ruleset:
         return raw_power
 
     def entry_skills(self, state: "GameState", entry: CardEntry) -> List[Skill]:
-        # base + virtual (virtual unused in Vanilla)
         skills = list(entry.get_card(state).skills) + list(entry.virtual_skills)
 
         if state.active_law == Law.NO_SILENCE:
@@ -99,11 +87,9 @@ class Ruleset:
         if state.active_law == Law.NO_POWERUP:
             return 0
 
-        # Silenced blocks Powerup (unless future Passive overrides later)
         if entry.status == Status.SILENCED:
             return 0
 
-        # Protected inverse law
         if state.active_law == Law.PROTECTED_INVERSE and entry.status == Status.PROTECTED:
             return 0
 
@@ -114,7 +100,10 @@ class Ruleset:
             total += self.skill_powerup_value(state, owner=entry.side, this=entry.this, skill=skill)
         return total
 
-    # ---- Skill evaluation ----
+    # ---- helpers ----
+
+    def is_copied_skill(self, skill: Skill) -> bool:
+        return bool(skill.params.get("_copied", False))
 
     def _condition_met(self, state: "GameState", owner: int, this: int, skill: Skill) -> bool:
         cond = skill.condition
@@ -122,8 +111,7 @@ class Ruleset:
             return True
         if isinstance(cond, bool):
             return cond
-        # Condition or LogicCondition (duck-typed by .evaluate)
-        return cond.evaluate(state, owner, this)  # type: ignore[union-attr]
+        return cond.evaluate(state, owner, this)
 
     def _resolve_value(self, state: "GameState", owner: int, this: int, skill: Skill) -> int:
         v = skill.value
@@ -149,17 +137,8 @@ class Ruleset:
         return value * count
 
     def apply_active_skill(self, state: "GameState", owner: int, this: int, skill: Skill) -> None:
-        """
-        Active skills: SILENCE / PROTECT. Applies status to targets.
-
-        Renathea single-status dominance:
-        - If target is Protected, it cannot become Silenced.
-        - If target is Silenced, it can become Protected (and then becomes Protected).
-        => Protected always wins over Silenced.
-        """
         if not self._condition_met(state, owner, this, skill):
             return
-
         if skill.target is None:
             return
 
@@ -173,7 +152,7 @@ class Ruleset:
             for idx in targets:
                 e = state.entries[idx]
                 if e.status == Status.PROTECTED:
-                    continue  # Protected blocks Silence
+                    continue
                 e.status = Status.SILENCED
 
 
@@ -193,13 +172,82 @@ class GameState:
 
 class Resolver:
     """
-    Pipeline (Interpretasi A / simultan):
-      1) resolve_continuous()  -> determine active_law (parity behavior)
+    Pipeline:
+      1) resolve_continuous()  -> apply Copy (inject virtual_skills), determine active_law
       2) apply_active_skills() -> apply SILENCE/PROTECT once
-      3) scoring happens in Game using ruleset accessors
+      3) scoring via ruleset accessors
     """
 
+    def apply_copy_skills(self, state: GameState) -> None:
+        # reset per run
+        for e in state.entries:
+            e.virtual_skills = []
+
+        for owner_idx, _player in enumerate(state.players):
+            for entry in state.entries:
+                if entry.zone != Zone.ARENA:
+                    continue
+                if entry.side != owner_idx:
+                    continue
+
+                base_skills = entry.get_card(state).skills
+                for sk in base_skills:
+                    if sk.skill_type != SkillType.COPY:
+                        continue
+                    if sk.timing != SkillTiming.Continuous:
+                        continue
+                    if not state.ruleset._condition_met(state, owner_idx, entry.this, sk):
+                        continue
+                    if sk.skill_filter is None:
+                        continue
+
+                    sf = sk.skill_filter
+                    source_indices = sf.card_filter.evaluate(state, owner_idx, entry.this)
+
+                    collected: List[Skill] = []
+                    for i in source_indices:
+                        src_entry = state.entries[i]
+                        src_skills = list(src_entry.get_card(state).skills) + list(src_entry.virtual_skills)
+
+                        for s2 in src_skills:
+                            # implicit Renathea rules:
+                            if s2.skill_type == SkillType.COPY:
+                                continue
+                            if state.ruleset.is_copied_skill(s2):
+                                continue
+                            collected.append(s2)
+
+                    if sf.include:
+                        inc = set(sf.include)
+                        collected = [s2 for s2 in collected if s2.skill_type in inc]
+                    if sf.exclude:
+                        exc = set(sf.exclude)
+                        collected = [s2 for s2 in collected if s2.skill_type not in exc]
+
+                    injected: List[Skill] = []
+                    for s2 in collected:
+                        cloned = Skill(
+                            text=s2.text,
+                            skill_type=s2.skill_type,
+                            timing=s2.timing,
+                            value=s2.value,
+                            target=s2.target,
+                            count=s2.count,
+                            condition=s2.condition,
+                            skill_filter=None,
+                            law=s2.law,
+                            passive=s2.passive,
+                            params=dict(s2.params),
+                        )
+                        cloned.params["_copied"] = True
+                        injected.append(cloned)
+
+                    entry.virtual_skills.extend(injected)
+
     def resolve_continuous(self, state: GameState) -> None:
+        # 0) Copy first (so copied Laws count)
+        self.apply_copy_skills(state)
+
         laws: List[Law] = []
         for entry in state.entries:
             if entry.zone != Zone.ARENA:
@@ -212,7 +260,6 @@ class Resolver:
                 if skill.law is not None:
                     laws.append(skill.law)
 
-        # If multiple laws present, none is active
         state.active_law = laws[0] if len(laws) == 1 else None
 
         if state.active_law == Law.LAW_CANCEL:
@@ -240,10 +287,6 @@ class MatchResult:
 
 
 class Game:
-    """
-    Engine core. Runs a single duel (shadowboxing setup helper included).
-    """
-
     def __init__(self, players: List[Player], ruleset: Optional[Ruleset] = None):
         self.state = GameState(players=players, ruleset=ruleset or Ruleset())
         self.resolver = Resolver()
@@ -252,13 +295,7 @@ class Game:
         entries: List[CardEntry] = []
         for p_idx, p in enumerate(self.state.players):
             for c_idx, _card in enumerate(p.cards):
-                entries.append(
-                    CardEntry(
-                        card=(p_idx, c_idx),
-                        zone=Zone.ARENA,
-                        side=p_idx,
-                    )
-                )
+                entries.append(CardEntry(card=(p_idx, c_idx), zone=Zone.ARENA, side=p_idx))
         for i, e in enumerate(entries):
             e.this = i
         self.state.entries = entries
@@ -302,7 +339,7 @@ class Game:
 
 
 # ----------------------------
-# JSON parsing helpers (skills-only)
+# JSON parsing helpers
 # ----------------------------
 
 class RawCardFilter(TypedDict, total=False):
@@ -331,14 +368,20 @@ class RawValue(TypedDict, total=False):
 
 
 class RawCondition(TypedDict, total=False):
-    # legacy Condition
     mode: str
     left: Any
     right: Any
     comparison: str
-    # new logic wrapper
+    # logical forms (optional)
     and_: List[Any]
     or_: List[Any]
+    not_: Any
+
+
+class RawSkillFilter(TypedDict, total=False):
+    card_filter: RawCardFilter
+    include: List[str]
+    exclude: List[str]
 
 
 class RawSkill(TypedDict, total=False):
@@ -349,6 +392,7 @@ class RawSkill(TypedDict, total=False):
     count: Any
     condition: Any
     law: str
+    skill_filter: RawSkillFilter
 
 
 class RawCard(TypedDict, total=False):
@@ -370,7 +414,7 @@ def parse_card_filter(data: Optional[RawCardFilter]) -> Optional[CardFilter]:
         comp = Comparison(data["power"][0])
         rhs = data["power"][1]
         if isinstance(rhs, dict):
-            rhs = parse_value(rhs)  # type: ignore[arg-type]
+            rhs = parse_value(rhs)
         power = (comp, rhs)
 
     return CardFilter(
@@ -395,10 +439,6 @@ def parse_count(data: Any) -> Optional[Union[int, Count]]:
         from .dsl import CountMode, RoleVariance
         from .model import SkillType
 
-        # Backward-compatible defaults:
-        # - if mode missing -> default Card
-        # - if card_filter missing -> default {} (match all)
-        # - if skill_type present but mode missing -> default Skill
         mode_str = data.get("mode")
         if mode_str is None:
             mode_str = "Skill" if data.get("skill_type") else "Card"
@@ -407,7 +447,7 @@ def parse_count(data: Any) -> Optional[Union[int, Count]]:
 
         return Count(
             mode=CountMode(mode_str),
-            card_filter=parse_card_filter(cf),
+            card_filter=parse_card_filter(cf) or CardFilter(),
             skill_type=SkillType(data["skill_type"]) if data.get("skill_type") else None,
             role_variance=RoleVariance(data["role_variance"]) if data.get("role_variance") else None,
         )
@@ -423,32 +463,31 @@ def parse_value(data: Any) -> Optional[Union[int, Value]]:
         from .dsl import Aggregation
         return Value(
             aggregation=Aggregation(data["aggregation"]),
-            card_filter=parse_card_filter(data["card_filter"]),
+            card_filter=parse_card_filter(data["card_filter"]) or CardFilter(),
             multiplier=int(data.get("multiplier", 1)),
         )
     return None
 
 
-def parse_condition(data: Any) -> Optional[Union[bool, Condition, Any]]:
+def parse_condition(data: Any) -> Optional[ConditionLike]:
     if data is None:
         return None
     if isinstance(data, bool):
         return data
     if isinstance(data, dict):
-        from .dsl import ConditionMode, Comparison, LogicCondition, LogicOp
-
-        # NEW: AND/OR wrapper (does not break old JSON)
+        # logical forms (preferred keys in JSON: "and", "or", "not")
         if "and" in data:
-            clauses = [parse_condition(x) for x in data["and"]]
-            clauses2 = [c if c is not None else False for c in clauses]
-            return LogicCondition(op=LogicOp.AND, clauses=clauses2)
-
+            items = [parse_condition(x) for x in (data.get("and") or [])]
+            return BoolCondition(op=BoolOp.AND, items=[x for x in items if x is not None])
         if "or" in data:
-            clauses = [parse_condition(x) for x in data["or"]]
-            clauses2 = [c if c is not None else False for c in clauses]
-            return LogicCondition(op=LogicOp.OR, clauses=clauses2)
+            items = [parse_condition(x) for x in (data.get("or") or [])]
+            return BoolCondition(op=BoolOp.OR, items=[x for x in items if x is not None])
+        if "not" in data:
+            item = parse_condition(data.get("not"))
+            return BoolCondition(op=BoolOp.NOT, items=[item] if item is not None else [])
 
-        # existing behavior (legacy Condition)
+        # legacy form
+        from .dsl import ConditionMode, Comparison
         mode = ConditionMode(data["mode"])
 
         def parse_side(x):
@@ -465,6 +504,20 @@ def parse_condition(data: Any) -> Optional[Union[bool, Condition, Any]]:
     return None
 
 
+def parse_skill_filter(data: Any) -> Optional[SkillFilter]:
+    if not data or not isinstance(data, dict):
+        return None
+    from .model import SkillType
+    cf = parse_card_filter(data.get("card_filter")) or CardFilter()
+    inc = data.get("include")
+    exc = data.get("exclude")
+    return SkillFilter(
+        card_filter=cf,
+        include=[SkillType(x) for x in inc] if inc else None,
+        exclude=[SkillType(x) for x in exc] if exc else None,
+    )
+
+
 def parse_skill(data: RawSkill) -> Skill:
     from .model import SkillType, Law
 
@@ -477,6 +530,7 @@ def parse_skill(data: RawSkill) -> Skill:
         count=parse_count(data.get("count")),
         condition=parse_condition(data.get("condition", True)),
         law=Law(data["law"]) if data.get("law") else None,
+        skill_filter=parse_skill_filter(data.get("skill_filter")),
     )
 
 
