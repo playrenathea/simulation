@@ -242,7 +242,6 @@ class Value:
             return max(values) * self.multiplier
         if self.aggregation == Aggregation.MIN:
             return min(values) * self.multiplier
-
         return 0
 
 
@@ -261,7 +260,6 @@ class Condition:
     def evaluate(self, state, you: int, this: int) -> bool:
         if self.mode in (ConditionMode.PRESENCE, ConditionMode.ABSENCE, ConditionMode.SINGLE):
             left_val = self._eval_side(self.left, state, you, this)
-
             if self.mode == ConditionMode.PRESENCE:
                 return left_val > 0
             if self.mode == ConditionMode.ABSENCE:
@@ -287,12 +285,10 @@ class Condition:
                 return l == r
             if self.comparison == Comparison.NOT_EQUAL:
                 return l != r
-
         return False
 
 
-# ---- logical composition for conditions (AND/OR/NOT) ----
-
+# logical conditions
 class BoolOp(StrEnum):
     AND = "and"
     OR = "or"
@@ -326,8 +322,6 @@ def _eval_condition(x: ConditionLike, state, you: int, this: int) -> bool:
         return x
     return x.evaluate(state, you, this)
 
-
-# ---- Copy skill filter ----
 
 @dataclass
 class SkillFilter:
