@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Bard",
+    "roles": ["Support", "Ranged"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Copy",
+        "text": "COPY skill Powerup di seluruh Arena.",
+        "skill_filter": {
+          "card_filter": { "zones": ["Arena"] },
+          "include": ["Powerup"]
+        }
+      }
+    ]
+  },
+  {
+    "name": "Blue Mage",
+    "roles": ["Magic"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Copy",
+        "text": "COPY semua skill di Arena lawan.",
+        "skill_filter": {
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Dancer",
+    "roles": ["Support", "Agility"],
+    "raw_power": 1,
+    "skills": [
+      {
+        "type": "Copy",
+        "text": "COPY skill Silence dan Protect di seluruh Arena.",
+        "skill_filter": {
+          "card_filter": { "zones": ["Arena"] },
+          "include": ["Silence", "Protect"]
+        }
+      }
+    ]
+  },
+  {
+    "name": "Mime",
+    "roles": ["Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Copy",
+        "text": "COPY skill lain di Arena kamu.",
+        "skill_filter": {
+          "card_filter": { "subject": "Other", "side": "You", "zones": ["Arena"] }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Prodigy",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Copy",
+        "text": "COPY skill dari Melee di Arena lawan.",
+        "skill_filter": {
+          "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Melee"] }
+        }
+      }
+    ]
+  }
+]
