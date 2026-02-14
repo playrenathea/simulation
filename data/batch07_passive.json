@@ -1,1 +1,94 @@
-
+[
+  {
+    "name": "Generalist",
+    "roles": [],
+    "raw_power": 2,
+    "skills": [
+      {
+        "type": "Passive",
+        "text": "PASSIVE: Kartu ini memiliki role lain yang TIDAK ada di Arena kamu (total 6 role).",
+        "passive": "generalist"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) jika TIDAK ada role berulang di Arena kamu.",
+        "value": 5,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Role",
+            "card_filter": { "side": "You", "zones": ["Arena"] },
+            "role_variance": "Duplicated"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Berserker",
+    "roles": ["Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Passive",
+        "text": "PASSIVE: Dapat mengaktifkan Powerup walaupun ter-silence.",
+        "passive": "berserker"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+5) jika kartu ini ter-silence.",
+        "value": 5,
+        "condition": {
+          "mode": "Presence",
+          "left": { "mode": "Card", "card_filter": { "subject": "This", "status": "Silenced" } }
+        }
+      }
+    ]
+  },
+  {
+    "name": "Freefolk",
+    "roles": ["Agility", "Melee"],
+    "raw_power": 3,
+    "skills": [
+      {
+        "type": "Passive",
+        "text": "PASSIVE: Kartu ini TIDAK terpengaruh skill Law.",
+        "passive": "freefolk"
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+6) per tiap skill Law di Arena lawan.",
+        "value": 6,
+        "count": {
+          "mode": "Skill",
+          "card_filter": { "side": "Opponent", "zones": ["Arena"] },
+          "skill_type": "Law"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Chanter",
+    "roles": ["Magic", "Support"],
+    "raw_power": 0,
+    "skills": [
+      {
+        "type": "Passive",
+        "text": "PASSIVE: Total Power kamu +7",
+        "passive": "chanter"
+      }
+    ]
+  },
+  {
+    "name": "Deflector",
+    "roles": ["Tank"],
+    "raw_power": 4,
+    "skills": [
+      {
+        "type": "Passive",
+        "text": "PASSIVE: Memantulkan skill aktif yang menargetkan kartu ini ke pemilik skill.",
+        "passive": "deflector"
+      }
+    ]
+  }
+]
