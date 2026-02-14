@@ -212,6 +212,7 @@ class Resolver:
                 if skill.law is not None:
                     laws.append(skill.law)
 
+        # If multiple laws present, none is active
         state.active_law = laws[0] if len(laws) == 1 else None
 
         if state.active_law == Law.LAW_CANCEL:
