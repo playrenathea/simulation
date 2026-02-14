@@ -6,6 +6,10 @@ from enum import StrEnum
 from typing import List, Optional, Union, Dict, Any, TYPE_CHECKING
 
 
+# ----------------------------
+# Enums (grammar / data layer)
+# ----------------------------
+
 class Side(StrEnum):
     YOU = "You"
     OPPONENT = "Opponent"
@@ -52,6 +56,7 @@ class Result(StrEnum):
 
 
 class Law(StrEnum):
+    # parity / existing
     NO_ROLES = "no_roles"
     NO_SILENCE = "no_silence"
     NO_POWERUP = "no_powerup"
@@ -63,14 +68,21 @@ class Law(StrEnum):
     POWER_MIN_15 = "power_min_15"
     LAW_CANCEL = "law_cancel"
 
+    # NEW
+    REMOVE_TIDAK = "remove_tidak"
+
 
 class Passive(StrEnum):
-    GENERALIST = "generalist"   # +1 virtual role (missing in your arena)
-    BERSERKER = "berserker"     # powerup works even if silenced
-    FREEFOLK = "freefolk"       # ignore global law (this card only)
-    CHANTER = "chanter"         # owner total power +7
-    DEFLECTOR = "deflector"     # reflect active skills targeting this card
+    GENERALIST = "generalist"
+    BERSERKER = "berserker"
+    FREEFOLK = "freefolk"
+    CHANTER = "chanter"
+    DEFLECTOR = "deflector"
 
+
+# ----------------------------
+# Core data classes (no rules)
+# ----------------------------
 
 if TYPE_CHECKING:
     from .dsl import CardFilter, Count, Value, ConditionLike, SkillFilter
@@ -87,14 +99,13 @@ class Skill:
     count: Optional[Union[int, "Count"]] = None
     condition: Optional["ConditionLike"] = True
 
-    # Copy
+    # Copy-specific
     skill_filter: Optional["SkillFilter"] = None
 
     # Law/Passive payload
     law: Optional[Law] = None
     passive: Optional[Passive] = None
 
-    # Internal tags
     params: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
