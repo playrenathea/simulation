@@ -1,9 +1,8 @@
-# engine/dsl.py
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union, Tuple, Dict
 
 from .model import Side, Zone, Role, Status, SkillType
 
@@ -44,6 +43,12 @@ class Aggregation(StrEnum):
     TOTAL = "total"
     MAX = "max"
     MIN = "min"
+
+
+# --- NEW: AND/OR wrapper ---
+class LogicOp(StrEnum):
+    AND = "AND"
+    OR = "OR"
 
 
 @dataclass
@@ -288,4 +293,23 @@ class Condition:
             if self.comparison == Comparison.NOT_EQUAL:
                 return l != r
 
+        return False
+
+
+# --- NEW: AND/OR composition of conditions ---
+@dataclass
+class LogicCondition:
+    op: LogicOp
+    clauses: List[Union[Condition, "LogicCondition", bool]]
+
+    def evaluate(self, state, you: int, this: int) -> bool:
+        def eval_one(c) -> bool:
+            if isinstance(c, bool):
+                return c
+            return c.evaluate(state, you, this)
+
+        if self.op == LogicOp.AND:
+            return all(eval_one(c) for c in self.clauses)
+        if self.op == LogicOp.OR:
+            return any(eval_one(c) for c in self.clauses)
         return False
