@@ -1,3 +1,4 @@
+# engine/dsl.py
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -43,12 +44,6 @@ class Aggregation(StrEnum):
     TOTAL = "total"
     MAX = "max"
     MIN = "min"
-
-
-# --- NEW: AND/OR wrapper ---
-class LogicOp(StrEnum):
-    AND = "AND"
-    OR = "OR"
 
 
 @dataclass
@@ -296,20 +291,47 @@ class Condition:
         return False
 
 
-# --- NEW: AND/OR composition of conditions ---
+# ---- NEW: logical composition for conditions (AND/OR/NOT) ----
+
+class BoolOp(StrEnum):
+    AND = "and"
+    OR = "or"
+    NOT = "not"
+
+
+ConditionLike = Union[bool, Condition, "BoolCondition"]
+
+
 @dataclass
-class LogicCondition:
-    op: LogicOp
-    clauses: List[Union[Condition, "LogicCondition", bool]]
+class BoolCondition:
+    op: BoolOp
+    items: List[ConditionLike]
 
     def evaluate(self, state, you: int, this: int) -> bool:
-        def eval_one(c) -> bool:
-            if isinstance(c, bool):
-                return c
-            return c.evaluate(state, you, this)
-
-        if self.op == LogicOp.AND:
-            return all(eval_one(c) for c in self.clauses)
-        if self.op == LogicOp.OR:
-            return any(eval_one(c) for c in self.clauses)
+        if self.op == BoolOp.AND:
+            return all(_eval_condition(x, state, you, this) for x in self.items)
+        if self.op == BoolOp.OR:
+            return any(_eval_condition(x, state, you, this) for x in self.items)
+        if self.op == BoolOp.NOT:
+            # NOT uses first item only
+            if not self.items:
+                return True
+            return not _eval_condition(self.items[0], state, you, this)
         return False
+
+
+def _eval_condition(x: ConditionLike, state, you: int, this: int) -> bool:
+    if x is None:
+        return True
+    if isinstance(x, bool):
+        return x
+    return x.evaluate(state, you, this)
+
+
+# ---- NEW: Copy skill filter ----
+
+@dataclass
+class SkillFilter:
+    card_filter: CardFilter
+    include: Optional[List[SkillType]] = None
+    exclude: Optional[List[SkillType]] = None
