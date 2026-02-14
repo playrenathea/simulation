@@ -6,10 +6,6 @@ from enum import StrEnum
 from typing import List, Optional, Union, Dict, Any, TYPE_CHECKING
 
 
-# ----------------------------
-# Enums (grammar / data layer)
-# ----------------------------
-
 class Side(StrEnum):
     YOU = "You"
     OPPONENT = "Opponent"
@@ -44,9 +40,9 @@ class SkillType(StrEnum):
 
 
 class SkillTiming(StrEnum):
-    Continuous = "Continuous"  # Law / Passive / Copy
-    Active = "Active"          # Silence / Protect
-    Power = "Power"            # Powerup
+    Continuous = "Continuous"
+    Active = "Active"
+    Power = "Power"
 
 
 class Result(StrEnum):
@@ -56,7 +52,6 @@ class Result(StrEnum):
 
 
 class Law(StrEnum):
-    # parity / existing
     NO_ROLES = "no_roles"
     NO_SILENCE = "no_silence"
     NO_POWERUP = "no_powerup"
@@ -68,8 +63,12 @@ class Law(StrEnum):
     POWER_MIN_15 = "power_min_15"
     LAW_CANCEL = "law_cancel"
 
-    # NEW
+    # NEW (Technomancer)
     REMOVE_TIDAK = "remove_tidak"
+
+    # NEW (Artificer / Dogmatist)
+    POWERUP_3 = "powerup_3"
+    IF_FAIL = "if_fail"
 
 
 class Passive(StrEnum):
@@ -79,10 +78,6 @@ class Passive(StrEnum):
     CHANTER = "chanter"
     DEFLECTOR = "deflector"
 
-
-# ----------------------------
-# Core data classes (no rules)
-# ----------------------------
 
 if TYPE_CHECKING:
     from .dsl import CardFilter, Count, Value, ConditionLike, SkillFilter
@@ -99,10 +94,8 @@ class Skill:
     count: Optional[Union[int, "Count"]] = None
     condition: Optional["ConditionLike"] = True
 
-    # Copy-specific
     skill_filter: Optional["SkillFilter"] = None
 
-    # Law/Passive payload
     law: Optional[Law] = None
     passive: Optional[Passive] = None
 
@@ -117,11 +110,6 @@ class Skill:
             else:
                 self.timing = SkillTiming.Continuous
 
-        if not isinstance(self.text, str):
-            raise TypeError("Skill.text must be a str")
-        if not isinstance(self.skill_type, SkillType):
-            raise TypeError("Skill.skill_type must be a SkillType enum")
-
 
 @dataclass
 class Card:
@@ -130,24 +118,8 @@ class Card:
     raw_power: int
     skills: List[Skill]
 
-    def __post_init__(self) -> None:
-        if not isinstance(self.name, str) or not self.name:
-            raise ValueError("Card.name must be a non-empty string")
-        if not isinstance(self.raw_power, int):
-            raise TypeError("Card.raw_power must be int")
-        if self.raw_power < 0:
-            raise ValueError("Card.raw_power must be >= 0")
-        if any(not isinstance(r, Role) for r in self.roles):
-            raise TypeError("Card.roles must be a list[Role]")
-        if any(not isinstance(s, Skill) for s in self.skills):
-            raise TypeError("Card.skills must be a list[Skill]")
-
 
 @dataclass
 class Player:
     name: str
     cards: List[Card]
-
-    def __str__(self) -> str:
-        card_names = ", ".join(c.name for c in self.cards)
-        return f"{self.name} ({card_names})"
