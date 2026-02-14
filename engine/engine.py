@@ -1,4 +1,3 @@
-# engine/engine.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -123,7 +122,8 @@ class Ruleset:
             return True
         if isinstance(cond, bool):
             return cond
-        return cond.evaluate(state, owner, this)
+        # Condition or LogicCondition (duck-typed by .evaluate)
+        return cond.evaluate(state, owner, this)  # type: ignore[union-attr]
 
     def _resolve_value(self, state: "GameState", owner: int, this: int, skill: Skill) -> int:
         v = skill.value
@@ -331,10 +331,14 @@ class RawValue(TypedDict, total=False):
 
 
 class RawCondition(TypedDict, total=False):
+    # legacy Condition
     mode: str
     left: Any
     right: Any
     comparison: str
+    # new logic wrapper
+    and_: List[Any]
+    or_: List[Any]
 
 
 class RawSkill(TypedDict, total=False):
@@ -425,13 +429,26 @@ def parse_value(data: Any) -> Optional[Union[int, Value]]:
     return None
 
 
-def parse_condition(data: Any) -> Optional[Union[bool, Condition]]:
+def parse_condition(data: Any) -> Optional[Union[bool, Condition, Any]]:
     if data is None:
         return None
     if isinstance(data, bool):
         return data
     if isinstance(data, dict):
-        from .dsl import ConditionMode, Comparison
+        from .dsl import ConditionMode, Comparison, LogicCondition, LogicOp
+
+        # NEW: AND/OR wrapper (does not break old JSON)
+        if "and" in data:
+            clauses = [parse_condition(x) for x in data["and"]]
+            clauses2 = [c if c is not None else False for c in clauses]
+            return LogicCondition(op=LogicOp.AND, clauses=clauses2)
+
+        if "or" in data:
+            clauses = [parse_condition(x) for x in data["or"]]
+            clauses2 = [c if c is not None else False for c in clauses]
+            return LogicCondition(op=LogicOp.OR, clauses=clauses2)
+
+        # existing behavior (legacy Condition)
         mode = ConditionMode(data["mode"])
 
         def parse_side(x):
