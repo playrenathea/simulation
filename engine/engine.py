@@ -9,7 +9,9 @@ from .model import (
     Zone, Status, Law, Result, Role, Passive
 )
 from .dsl import (
-    CardFilter, Count, Value, Condition, BoolCondition, BoolOp, ConditionLike, SkillFilter
+    CardFilter, Count, Value, Condition,
+    BoolCondition, BoolOp, ConditionLike,
+    SkillFilter, Comparison, ConditionMode
 )
 
 
@@ -24,8 +26,6 @@ class CardEntry:
     side: int = 0                         # owner index
     this: int = 0                         # index in state.entries
 
-    # SINGLE status (Renathea rule)
-    # Protected dominates: once Protected, cannot become Silenced.
     status: Optional[Status] = None
 
     visibility: List[int] = field(default_factory=list)
@@ -34,10 +34,10 @@ class CardEntry:
     virtual_skills: List[Skill] = field(default_factory=list)
     virtual_roles: List[Role] = field(default_factory=list)
 
-    # Passive flags (computed each resolve_continuous)
-    ignore_law: bool = False                 # Freefolk
-    powerup_while_silenced: bool = False     # Berserker
-    has_deflector: bool = False              # Deflector
+    # Passive flags
+    ignore_law: bool = False
+    powerup_while_silenced: bool = False
+    has_deflector: bool = False
 
     def get_card(self, state: "GameState") -> Card:
         player_index, card_index = self.card
@@ -60,10 +60,13 @@ class CardEntry:
 
 
 # ----------------------------
-# Ruleset (global rules live here)
+# Ruleset
 # ----------------------------
 
 class Ruleset:
+    def is_copied_skill(self, skill: Skill) -> bool:
+        return bool(skill.params.get("_copied", False))
+
     def _law_for_entry(self, state: "GameState", entry: CardEntry) -> Optional[Law]:
         return None if entry.ignore_law else state.active_law
 
@@ -91,7 +94,6 @@ class Ruleset:
     def entry_skills(self, state: "GameState", entry: CardEntry) -> List[Skill]:
         law = self._law_for_entry(state, entry)
 
-        # base + virtual
         skills = list(entry.get_card(state).skills) + list(entry.virtual_skills)
 
         if law == Law.NO_SILENCE:
@@ -102,36 +104,58 @@ class Ruleset:
 
         return skills
 
-    def entry_powerup(self, state: "GameState", entry: CardEntry) -> int:
-        law = self._law_for_entry(state, entry)
+    # -------- Technomancer: remove_tidak condition transformer --------
 
-        if law == Law.NO_POWERUP:
-            return 0
+    def _remove_tidak_transform(self, cond: ConditionLike) -> ConditionLike:
+        # bool
+        if isinstance(cond, bool):
+            return cond
 
-        # Silenced blocks Powerup unless Berserker
-        if entry.status == Status.SILENCED and not entry.powerup_while_silenced:
-            return 0
+        # BoolCondition
+        if isinstance(cond, BoolCondition):
+            if cond.op == BoolOp.NOT:
+                # remove NOT: {"not": X} -> X (transformed)
+                if not cond.items:
+                    return True
+                inner = cond.items[0]
+                return self._remove_tidak_transform(inner)
+            # AND/OR: recurse
+            return BoolCondition(
+                op=cond.op,
+                items=[self._remove_tidak_transform(x) for x in cond.items],
+            )
 
-        # Protected inverse law
-        if law == Law.PROTECTED_INVERSE and entry.status == Status.PROTECTED:
-            return 0
+        # Condition
+        if isinstance(cond, Condition):
+            mode = cond.mode
+            left = cond.left
+            right = cond.right
+            comp = cond.comparison
 
-        total = 0
-        for skill in self.entry_skills(state, entry):
-            if skill.skill_type != SkillType.POWERUP:
-                continue
-            total += self.skill_powerup_value(state, owner=entry.side, this=entry.this, skill=skill)
-        return total
+            # Absence -> Presence
+            if mode == ConditionMode.ABSENCE:
+                mode = ConditionMode.PRESENCE
 
-    # ---- helpers ----
+            # "!=" -> "=="
+            if mode == ConditionMode.COMPARISON and comp == Comparison.NOT_EQUAL:
+                comp = Comparison.EQUAL
 
-    def is_copied_skill(self, skill: Skill) -> bool:
-        return bool(skill.params.get("_copied", False))
+            return Condition(mode=mode, left=left, right=right, comparison=comp)
 
-    def _condition_met(self, state: "GameState", owner: int, this: int, skill: Skill) -> bool:
+        return cond
+
+    # ---------------------------------------------------------------
+
+    def _condition_met(self, state: "GameState", owner: int, this: int, skill: Skill, entry: Optional[CardEntry] = None) -> bool:
         cond = skill.condition
         if cond is None:
             return True
+
+        # Apply REMOVE_TIDAK on condition layer (if law applies to this entry)
+        if state.active_law == Law.REMOVE_TIDAK and entry is not None and not entry.ignore_law:
+            if isinstance(cond, (bool, Condition, BoolCondition)):
+                cond = self._remove_tidak_transform(cond)
+
         if isinstance(cond, bool):
             return cond
         return cond.evaluate(state, owner, this)
@@ -152,35 +176,43 @@ class Ruleset:
             return c.evaluate(state, owner, this)
         return int(c)
 
-    def skill_powerup_value(self, state: "GameState", owner: int, this: int, skill: Skill) -> int:
-        if not self._condition_met(state, owner, this, skill):
+    def skill_powerup_value(self, state: "GameState", owner: int, this: int, skill: Skill, entry: CardEntry) -> int:
+        if not self._condition_met(state, owner, this, skill, entry=entry):
             return 0
         value = self._resolve_value(state, owner, this, skill)
         count = self._resolve_count(state, owner, this, skill)
         return value * count
 
+    def entry_powerup(self, state: "GameState", entry: CardEntry) -> int:
+        law = self._law_for_entry(state, entry)
+
+        if law == Law.NO_POWERUP:
+            return 0
+
+        if entry.status == Status.SILENCED and not entry.powerup_while_silenced:
+            return 0
+
+        if law == Law.PROTECTED_INVERSE and entry.status == Status.PROTECTED:
+            return 0
+
+        total = 0
+        for skill in self.entry_skills(state, entry):
+            if skill.skill_type != SkillType.POWERUP:
+                continue
+            total += self.skill_powerup_value(state, owner=entry.side, this=entry.this, skill=skill, entry=entry)
+        return total
+
     def apply_active_skill(self, state: "GameState", owner: int, this: int, skill: Skill) -> None:
-        """
-        Active skills: SILENCE / PROTECT. Applies status to targets.
-
-        Renathea single-status dominance:
-        - If target is Protected, it cannot become Silenced.
-        - If target is Silenced, it can become Protected.
-        => Protected always wins over Silenced.
-
-        Deflector:
-        - If an active skill targets a Deflector entry, that target is removed,
-          and the skill instead targets the source card (this).
-        """
-        if not self._condition_met(state, owner, this, skill):
+        if skill.target is None:
             return
 
-        if skill.target is None:
+        src_entry = state.entries[this]
+        if not self._condition_met(state, owner, this, skill, entry=src_entry):
             return
 
         targets = skill.target.evaluate(state, owner, this)
 
-        # Deflector reflect: any deflector among targets -> remove them, add source (this)
+        # Deflector reflect
         if targets:
             reflected = [idx for idx in targets if state.entries[idx].has_deflector]
             if reflected:
@@ -196,7 +228,7 @@ class Ruleset:
             for idx in targets:
                 e = state.entries[idx]
                 if e.status == Status.PROTECTED:
-                    continue  # Protected blocks Silence
+                    continue
                 e.status = Status.SILENCED
 
 
@@ -213,20 +245,10 @@ class GameState:
     ruleset: Ruleset = field(default_factory=Ruleset)
     cache: Dict[str, Any] = field(default_factory=dict)
 
-    # per-owner continuous bonus (e.g. Chanter)
     owner_power_bonus: List[int] = field(default_factory=list)
 
 
 class Resolver:
-    """
-    Continuous pipeline:
-      0) reset continuous state
-      1) apply Copy (inject virtual_skills)
-      2) apply Passive (set flags/bonus/virtual_roles)
-      3) resolve Law (global selection)
-      4) apply Active skills (Silence/Protect) later
-    """
-
     def _reset_continuous(self, state: GameState) -> None:
         state.active_law = None
         state.owner_power_bonus = [0 for _ in range(len(state.players))]
@@ -239,8 +261,6 @@ class Resolver:
 
     def _build_copy_virtuals_once(self, state: GameState) -> bool:
         before = [(e.this, len(e.virtual_skills)) for e in state.entries]
-
-        # recompute from scratch each pass
         for e in state.entries:
             e.virtual_skills = []
 
@@ -256,9 +276,9 @@ class Resolver:
                         continue
                     if sk.timing != SkillTiming.Continuous:
                         continue
-                    if not state.ruleset._condition_met(state, owner_idx, entry.this, sk):
-                        continue
                     if sk.skill_filter is None:
+                        continue
+                    if not state.ruleset._condition_met(state, owner_idx, entry.this, sk, entry=entry):
                         continue
 
                     sf = sk.skill_filter
@@ -267,9 +287,7 @@ class Resolver:
                     collected: List[Skill] = []
                     for i in source_indices:
                         src_entry = state.entries[i]
-
-                        # base skills only (cannot copy results of copy)
-                        src_skills = list(src_entry.get_card(state).skills)
+                        src_skills = list(src_entry.get_card(state).skills)  # base only
 
                         for s2 in src_skills:
                             if s2.skill_type == SkillType.COPY:
@@ -310,17 +328,11 @@ class Resolver:
         return before != after
 
     def apply_copy_skills(self, state: GameState) -> None:
-        max_iters = 5
-        for _ in range(max_iters):
+        for _ in range(5):
             if not self._build_copy_virtuals_once(state):
                 break
 
     def apply_passives(self, state: GameState) -> None:
-        """
-        Passive is Continuous and stackable; affects only the card (or its owner bonus).
-        Evaluated after Copy so passives can be copied too (if included).
-        """
-
         def roles_in_your_arena_excluding(owner: int, this_entry: int) -> set[Role]:
             out: set[Role] = set()
             for e in state.entries:
@@ -338,16 +350,14 @@ class Resolver:
                 continue
 
             owner = entry.side
-            skills = state.ruleset.entry_skills(state, entry)
-
-            for sk in skills:
+            for sk in state.ruleset.entry_skills(state, entry):
                 if sk.skill_type != SkillType.PASSIVE:
                     continue
                 if sk.timing != SkillTiming.Continuous:
                     continue
-                if not state.ruleset._condition_met(state, owner, entry.this, sk):
-                    continue
                 if sk.passive is None:
+                    continue
+                if not state.ruleset._condition_met(state, owner, entry.this, sk, entry=entry):
                     continue
 
                 if sk.passive == Passive.FREEFOLK:
@@ -363,9 +373,7 @@ class Resolver:
                     entry.has_deflector = True
 
                 elif sk.passive == Passive.GENERALIST:
-                    # ✅ UPDATED: add ALL missing roles not present in your arena (excluding THIS)
                     present = roles_in_your_arena_excluding(owner, entry.this)
-
                     base_roles = set(entry.get_card(state).roles)
                     already_virtual = set(entry.virtual_roles)
 
@@ -397,9 +405,9 @@ class Resolver:
 
     def resolve_continuous(self, state: GameState) -> None:
         self._reset_continuous(state)
-        self.apply_copy_skills(state)    # Copy FIRST
-        self.apply_passives(state)       # Passive SECOND
-        self.resolve_active_law(state)   # Law THIRD
+        self.apply_copy_skills(state)    # Copy first
+        self.apply_passives(state)       # Passive second
+        self.resolve_active_law(state)   # Law third
 
     def apply_active_skills(self, state: GameState) -> None:
         for player_idx, _player in enumerate(state.players):
@@ -431,13 +439,7 @@ class Game:
         entries: List[CardEntry] = []
         for p_idx, p in enumerate(self.state.players):
             for c_idx, _card in enumerate(p.cards):
-                entries.append(
-                    CardEntry(
-                        card=(p_idx, c_idx),
-                        zone=Zone.ARENA,
-                        side=p_idx,
-                    )
-                )
+                entries.append(CardEntry(card=(p_idx, c_idx), zone=Zone.ARENA, side=p_idx))
         for i, e in enumerate(entries):
             e.this = i
         self.state.entries = entries
@@ -449,11 +451,9 @@ class Game:
             if entry.zone == Zone.ARENA and entry.side == player_idx:
                 total += entry.get_total_power(self.state)
 
-        # owner bonus from passives (e.g. Chanter)
         if self.state.owner_power_bonus:
             total += self.state.owner_power_bonus[player_idx]
 
-        # global caps
         if self.state.active_law == Law.POWER_MAX_15:
             total = min(total, 15)
         if self.state.active_law == Law.POWER_MIN_15:
@@ -581,11 +581,11 @@ def parse_count(data: Any) -> Optional[Union[int, Count]]:
         if mode_str is None:
             mode_str = "Skill" if data.get("skill_type") else "Card"
 
-        cf = data.get("card_filter", {}) or {}
+        cf = parse_card_filter(data.get("card_filter", {}) or {}) or CardFilter()
 
         return Count(
             mode=CountMode(mode_str),
-            card_filter=parse_card_filter(cf) or CardFilter(),
+            card_filter=cf,
             skill_type=SkillType(data["skill_type"]) if data.get("skill_type") else None,
             role_variance=RoleVariance(data["role_variance"]) if data.get("role_variance") else None,
         )
