@@ -1,496 +1,280 @@
-"""Top formation evolutionary search (balancing-first).
+"""
+Top Formation Evolutionary Simulation
 
-Concept:
-- Maintain a league (pool) of formations (3 cards).
-- Init with (keep_top + add_per_session) formations.
-- Each session: add add_per_session new formations.
-- Only simulate matches needed: (new vs all existing pool incl. new), skipping self.
-- Rank formations by (%W - %L) within the current pool, then keep top keep_top.
-- Every report_every sessions: write a report CSV and save a checkpoint that can resume.
+Balancing-first evolutionary league.
 
-Notes:
-- Formation identity is order-insensitive and derived from Card.name.
-- Duplicates (including order permutations) are rejected globally per run.
+Provides:
+- get_parameters()
+- run(cards, params)
+
+Supports:
+- random seed (None = fully random)
+- checkpoint save/resume
 """
 
 from __future__ import annotations
 
-import csv
-import json
 import os
+import csv
+import time
 import pickle
 import random
-import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Tuple, Sequence, Any
 
-from engine.engine import Game, parse_card
-from engine.model import Card, Player, Result
-
-
-# -----------------------------
-# Keys / Encoding
-# -----------------------------
-
-FormationKey = Tuple[str, str, str]  # sorted 3 names
+from engine.engine import Game
+from engine.model import Player, Card, Result
 
 
-def formation_key(names: Sequence[str]) -> FormationKey:
-    if len(names) != 3:
-        raise ValueError("formation_key expects exactly 3 names")
-    return tuple(sorted(names))  # type: ignore[return-value]
+# =============================
+# Public API
+# =============================
+
+def get_parameters() -> Dict[str, Dict[str, Any]]:
+    return {
+        "keep_top": {"type": "int", "default": 200},
+        "add_per_session": {"type": "int", "default": 50},
+        "report_every": {"type": "int", "default": 100},
+        "sessions": {"type": "int", "default": 500},
+        "seed": {"type": "int_or_none", "default": None},
+        "resume_path": {"type": "str_or_none", "default": None},
+    }
 
 
-def outcome_to_int(outcome: Result) -> int:
-    # perspective: +1 win, 0 draw, -1 lose
-    if outcome == Result.WIN:
-        return 1
-    if outcome == Result.DRAW:
-        return 0
-    return -1
+def run(cards: Sequence[Card], params: Dict[str, Any]):
+    resume_path = params.get("resume_path")
+
+    if resume_path:
+        runner = Runner.resume(resume_path, cards)
+        print("Resumed from:", resume_path)
+    else:
+        runner = Runner(cards, params)
+        runner.initialize()
+
+    runner.step(params["sessions"])
+
+    print("Run directory:", runner.run_dir)
+    return runner
 
 
-def int_to_outcome(v: int) -> Result:
-    if v > 0:
-        return Result.WIN
-    if v < 0:
-        return Result.LOSE
-    return Result.DRAW
+# =============================
+# Core Engine
+# =============================
+
+def formation_key(names):
+    return tuple(sorted(names))
 
 
-def pair_key(a_id: int, b_id: int) -> Tuple[int, int]:
-    return (a_id, b_id) if a_id < b_id else (b_id, a_id)
-
-
-# -----------------------------
-# Loading
-# -----------------------------
-
-def list_sets(data_dir: str | os.PathLike = "data") -> List[str]:
-    p = Path(data_dir)
-    return sorted([f.name for f in p.iterdir() if f.is_file() and f.suffix.lower() == ".json"])
-
-
-def load_cards(
-    selected_files: Sequence[str],
-    *,
-    data_dir: str | os.PathLike = "data",
-    dedupe_by_name: bool = True,
-) -> Tuple[List[str], List[Card]]:
-    base = Path(data_dir)
-    paths: List[str] = []
-    cards: List[Card] = []
-    for fname in selected_files:
-        path = (base / fname).resolve()
-        if not path.exists():
-            raise FileNotFoundError(f"Set not found: {path}")
-        with open(path, "r", encoding="utf-8") as f:
-            raw_cards = json.load(f)
-        paths.append(str(path))
-        cards.extend(parse_card(c) for c in raw_cards)
-
-    if dedupe_by_name:
-        seen = set()
-        deduped: List[Card] = []
-        for c in cards:
-            if c.name in seen:
-                continue
-            seen.add(c.name)
-            deduped.append(c)
-        cards = deduped
-
-    return paths, cards
-
-
-# -----------------------------
-# Core data structures
-# -----------------------------
-
-
-@dataclass(frozen=True)
-class Formation:
-    """Formation is identified by its key (3 card names sorted).
-
-    The actual Card objects are resolved via name->Card map.
-    """
-
-    id: int
-    key: FormationKey
-
-    @property
-    def names(self) -> Tuple[str, str, str]:
-        return self.key
+def pair_key(a, b):
+    return (a, b) if a < b else (b, a)
 
 
 @dataclass
-class FormationStats:
-    wins: int = 0
-    draws: int = 0
-    losses: int = 0
+class Formation:
+    id: int
+    key: Tuple[str, str, str]
 
-    def as_rates(self) -> Tuple[float, float, float]:
-        n = self.wins + self.draws + self.losses
-        if n <= 0:
-            return (0.0, 0.0, 0.0)
-        return (self.wins / n, self.draws / n, self.losses / n)
 
-    def wl_rate_diff(self) -> float:
-        w, _d, l = self.as_rates()
+@dataclass
+class Stats:
+    W: int = 0
+    D: int = 0
+    L: int = 0
+
+    def rates(self):
+        n = self.W + self.D + self.L
+        if n == 0:
+            return 0, 0, 0
+        return self.W/n, self.D/n, self.L/n
+
+    def score(self):
+        w, _, l = self.rates()
         return w - l
 
 
-@dataclass
-class RunConfig:
-    run_id: str
-    selected_sets: List[str]
-    dedupe_by_name: bool
-    keep_top: int
-    add_per_session: int
-    report_every: int
-    seed: Optional[int]
-    formation_key_mode: str = "order_insensitive_sorted_names"
-    ranking_metric: str = "%W-%L"
-    exclude_self_match: bool = True
+class Runner:
 
+    def __init__(self, cards: Sequence[Card], params: Dict[str, Any]):
 
-@dataclass
-class Checkpoint:
-    config: RunConfig
-    session_idx: int
-    rng_state: object
-    next_formation_id: int
+        self.cards = {c.name: c for c in cards}
+        self.card_names = list(self.cards.keys())
 
-    # current pool
-    pool_ids: List[int]
+        self.keep_top = params["keep_top"]
+        self.add_per_session = params["add_per_session"]
+        self.report_every = params["report_every"]
 
-    # global duplicate guard
-    seen_keys: set
+        self.rng = random.Random()
+        if params.get("seed") is not None:
+            self.rng.seed(params["seed"])
 
-    # registry
-    formations: Dict[int, Formation]
-
-    # match cache: (min_id, max_id) -> outcome int (from min_id perspective)
-    match_cache: Dict[Tuple[int, int], int]
-
-
-# -----------------------------
-# League runner
-# -----------------------------
-
-
-class TopFormationRunner:
-    def __init__(
-        self,
-        cards: Sequence[Card],
-        *,
-        run_dir: str | os.PathLike = "runs/top_formation",
-        keep_top: int = 200,
-        add_per_session: int = 50,
-        report_every: int = 100,
-        seed: Optional[int] = None,
-        selected_sets: Optional[List[str]] = None,
-        dedupe_by_name: bool = True,
-    ):
-        if keep_top <= 0:
-            raise ValueError("keep_top must be > 0")
-        if add_per_session <= 0:
-            raise ValueError("add_per_session must be > 0")
-        if report_every <= 0:
-            raise ValueError("report_every must be > 0")
-        if len(cards) < 3:
-            raise ValueError("Need at least 3 cards")
-
-        self.cards_by_name: Dict[str, Card] = {c.name: c for c in cards}
-        self.card_names: List[str] = list(self.cards_by_name.keys())
-
-        self.rng = random.Random(seed) if seed is not None else random.Random()
-        if seed is None:
-            self.rng.seed(time.time_ns())
-
-        run_id = time.strftime("%Y%m%d-%H%M%S")
-        self.config = RunConfig(
-            run_id=run_id,
-            selected_sets=selected_sets or [],
-            dedupe_by_name=dedupe_by_name,
-            keep_top=keep_top,
-            add_per_session=add_per_session,
-            report_every=report_every,
-            seed=seed,
-        )
-
-        self.run_dir = Path(run_dir) / run_id
+        self.run_id = time.strftime("%Y%m%d-%H%M%S")
+        self.run_dir = Path("runs/top_formation") / self.run_id
         self.ckpt_dir = self.run_dir / "checkpoints"
         self.report_dir = self.run_dir / "reports"
+
         self.ckpt_dir.mkdir(parents=True, exist_ok=True)
         self.report_dir.mkdir(parents=True, exist_ok=True)
 
         self.formations: Dict[int, Formation] = {}
-        self.pool_ids: List[int] = []
-        self.seen_keys: set = set()
-        self.match_cache: Dict[Tuple[int, int], int] = {}
-        self.next_formation_id: int = 1
-        self.session_idx: int = 0
+        self.pool: List[int] = []
+        self.seen = set()
+        self.cache: Dict[Tuple[int, int], int] = {}
+        self.next_id = 1
+        self.session = 0
 
-        self._save_config()
+    # -------------------------
 
     @classmethod
-    def resume_from_checkpoint(cls, ckpt_path: str | os.PathLike, cards: Sequence[Card]):
-        """Resume a run from a checkpoint file."""
-        ckpt_path = Path(ckpt_path)
-        with open(ckpt_path, "rb") as f:
-            ckpt: Checkpoint = pickle.load(f)
+    def resume(cls, path, cards):
+        with open(path, "rb") as f:
+            obj = pickle.load(f)
+        obj.cards = {c.name: c for c in cards}
+        obj.card_names = list(obj.cards.keys())
+        return obj
 
-        # Bypass __init__ to avoid creating a new run folder.
-        runner = cls.__new__(cls)
-        runner.cards_by_name = {c.name: c for c in cards}
-        runner.card_names = list(runner.cards_by_name.keys())
+    # -------------------------
 
-        runner.config = ckpt.config
-        runner.run_dir = ckpt_path.parent.parent
-        runner.ckpt_dir = runner.run_dir / "checkpoints"
-        runner.report_dir = runner.run_dir / "reports"
-        runner.ckpt_dir.mkdir(parents=True, exist_ok=True)
-        runner.report_dir.mkdir(parents=True, exist_ok=True)
+    def initialize(self):
+        init_size = self.keep_top + self.add_per_session
+        ids = self._generate(init_size)
+        self.pool = ids
+        self._ensure_matches(ids)
+        self._trim()
+        self._save("init")
+        self._report("init")
 
-        runner.rng = random.Random()
-        runner.rng.setstate(ckpt.rng_state)
-        runner.session_idx = ckpt.session_idx
-        runner.next_formation_id = ckpt.next_formation_id
-        runner.pool_ids = list(ckpt.pool_ids)
-        runner.seen_keys = set(ckpt.seen_keys)
-        runner.formations = dict(ckpt.formations)
-        runner.match_cache = dict(ckpt.match_cache)
+    # -------------------------
 
-        return runner
+    def step(self, n):
+        for _ in range(n):
+            self.session += 1
+            new_ids = self._generate(self.add_per_session)
+            self.pool.extend(new_ids)
+            self._ensure_matches(new_ids)
+            self._trim()
 
-    def initialize(self) -> None:
-        """Create initial pool and compute initial cache."""
-        init_n = self.config.keep_top + self.config.add_per_session
-        new_ids = self._generate_unique_formations(init_n)
-        self.pool_ids = new_ids
+            if self.session % self.report_every == 0:
+                self._save()
+                self._report()
 
-        # Build initial cache for full pool (round-robin) once.
-        self._ensure_matches_for_new_ids(new_ids)
+    # -------------------------
 
-        # Trim to keep_top
-        ranked = self.rank_pool(self.pool_ids)
-        self.pool_ids = [fid for fid, _stats in ranked[: self.config.keep_top]]
-        self.session_idx = 0
+    def _generate(self, n):
+        new = []
+        attempts = 0
+        while len(new) < n:
+            attempts += 1
+            if attempts > n*200:
+                raise RuntimeError("Too many duplicate attempts.")
 
-        # Save initial checkpoint + report
-        self.save_checkpoint(tag="init")
-        self.write_report(tag="init")
+            names = self.rng.sample(self.card_names, 3)
+            key = formation_key(names)
+            if key in self.seen:
+                continue
 
-    def step(self, n_sessions: int = 1) -> None:
-        """Run N sessions. Checkpoints/reports are written every report_every sessions."""
-        if not self.pool_ids:
-            raise RuntimeError("Runner not initialized. Call initialize() or resume_from_checkpoint().")
+            fid = self.next_id
+            self.next_id += 1
+            self.seen.add(key)
+            self.formations[fid] = Formation(fid, key)
+            new.append(fid)
 
-        for _ in range(n_sessions):
-            self.session_idx += 1
+        return new
 
-            # Add batch
-            new_ids = self._generate_unique_formations(self.config.add_per_session)
-            self.pool_ids.extend(new_ids)
+    # -------------------------
 
-            # Only compute matches that involve newly added formations.
-            self._ensure_matches_for_new_ids(new_ids)
-
-            # Rank & trim
-            ranked = self.rank_pool(self.pool_ids)
-            self.pool_ids = [fid for fid, _stats in ranked[: self.config.keep_top]]
-
-            # Savepoint
-            if self.session_idx % self.config.report_every == 0:
-                self.save_checkpoint()
-                self.write_report()
-
-    def rank_pool(self, pool_ids: Sequence[int]) -> List[Tuple[int, FormationStats]]:
-        """Compute W/D/L within the pool and return sorted list (best first)."""
-        stats: Dict[int, FormationStats] = {fid: FormationStats() for fid in pool_ids}
-
-        ids = list(pool_ids)
-        for i in range(len(ids)):
-            a = ids[i]
-            for j in range(i + 1, len(ids)):
-                b = ids[j]
+    def _ensure_matches(self, new_ids):
+        for a in new_ids:
+            for b in self.pool:
+                if a == b:
+                    continue
                 pk = pair_key(a, b)
-                if pk not in self.match_cache:
-                    self._simulate_and_store(a, b)
-                v = self.match_cache[pk]
-                # v is from min_id perspective
-                min_id, _max_id = pk
-                if a == min_id:
-                    out_a = int_to_outcome(v)
-                    out_b = int_to_outcome(-v)
-                else:
-                    out_a = int_to_outcome(-v)
-                    out_b = int_to_outcome(v)
+                if pk in self.cache:
+                    continue
+                self._simulate(a, b)
 
-                self._accumulate(stats[a], out_a)
-                self._accumulate(stats[b], out_b)
+    # -------------------------
+
+    def _simulate(self, a, b):
+        fa = self.formations[a]
+        fb = self.formations[b]
+
+        p1 = Player("A", [self.cards[n] for n in fa.key])
+        p2 = Player("B", [self.cards[n] for n in fb.key])
+        res = Game([p1, p2]).run()
+
+        outcome = res.outcomes[0]
+        v = 1 if outcome == Result.WIN else (-1 if outcome == Result.LOSE else 0)
+
+        pk = pair_key(a, b)
+        if a < b:
+            self.cache[pk] = v
+        else:
+            self.cache[pk] = -v
+
+    # -------------------------
+
+    def _trim(self):
+        stats = {fid: Stats() for fid in self.pool}
+
+        ids = list(self.pool)
+        for i in range(len(ids)):
+            for j in range(i+1, len(ids)):
+                a, b = ids[i], ids[j]
+                pk = pair_key(a, b)
+                if pk not in self.cache:
+                    continue
+                v = self.cache[pk]
+                if a < b:
+                    va = v
+                else:
+                    va = -v
+
+                if va == 1:
+                    stats[a].W += 1
+                    stats[b].L += 1
+                elif va == -1:
+                    stats[a].L += 1
+                    stats[b].W += 1
+                else:
+                    stats[a].D += 1
+                    stats[b].D += 1
 
         ranked = sorted(
-            [(fid, stats[fid]) for fid in ids],
-            key=lambda x: (x[1].wl_rate_diff(), x[1].wins, -x[1].losses),
-            reverse=True,
+            self.pool,
+            key=lambda fid: stats[fid].score(),
+            reverse=True
         )
-        return ranked
 
-    def save_checkpoint(self, tag: Optional[str] = None) -> Path:
-        """Save a checkpoint that can be resumed."""
-        fname = self._ckpt_name(tag)
-        path = self.ckpt_dir / fname
-        ckpt = Checkpoint(
-            config=self.config,
-            session_idx=self.session_idx,
-            rng_state=self.rng.getstate(),
-            next_formation_id=self.next_formation_id,
-            pool_ids=list(self.pool_ids),
-            seen_keys=set(self.seen_keys),
-            formations=dict(self.formations),
-            match_cache=dict(self.match_cache),
-        )
-        with open(path, "wb") as f:
-            pickle.dump(ckpt, f, protocol=pickle.HIGHEST_PROTOCOL)
+        self.pool = ranked[:self.keep_top]
 
-        # also update latest pointer
-        with open(self.run_dir / "latest.txt", "w", encoding="utf-8") as f:
-            f.write(str(path))
-        return path
+    # -------------------------
 
-    def write_report(self, tag: Optional[str] = None, top_n: int = 50) -> Path:
-        """Write a report CSV for the current pool."""
-        ranked = self.rank_pool(self.pool_ids)
-        fname = self._report_name(tag)
+    def _report(self, tag=None):
+        fname = f"report_s{self.session:05d}.csv"
+        if tag:
+            fname = f"report_{tag}.csv"
+
         path = self.report_dir / fname
 
         with open(path, "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            w.writerow(
-                [
-                    "session",
-                    "rank",
-                    "card_1",
-                    "card_2",
-                    "card_3",
-                    "W",
-                    "D",
-                    "L",
-                    "pctW",
-                    "pctD",
-                    "pctL",
-                    "pctW_minus_pctL",
-                ]
-            )
-            for r, (fid, st) in enumerate(ranked[:top_n], start=1):
-                names = self.formations[fid].names
-                pctW, pctD, pctL = st.as_rates()
-                w.writerow(
-                    [
-                        self.session_idx,
-                        r,
-                        names[0],
-                        names[1],
-                        names[2],
-                        st.wins,
-                        st.draws,
-                        st.losses,
-                        round(pctW, 6),
-                        round(pctD, 6),
-                        round(pctL, 6),
-                        round(st.wl_rate_diff(), 6),
-                    ]
-                )
+            w.writerow(["rank", "card1", "card2", "card3"])
 
-        return path
+            for i, fid in enumerate(self.pool[:50], 1):
+                w.writerow([i, *self.formations[fid].key])
 
-    # -----------------
-    # Internal helpers
-    # -----------------
+    # -------------------------
 
-    def _save_config(self) -> None:
-        path = self.run_dir / "config.json"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.config.__dict__, f, ensure_ascii=False, indent=2)
-
-    def _ckpt_name(self, tag: Optional[str]) -> str:
+    def _save(self, tag=None):
+        fname = f"ckpt_s{self.session:05d}.pkl"
         if tag:
-            return f"ckpt_{tag}_s{self.session_idx:05d}.pkl"
-        return f"ckpt_s{self.session_idx:05d}.pkl"
+            fname = f"ckpt_{tag}.pkl"
 
-    def _report_name(self, tag: Optional[str]) -> str:
-        if tag:
-            return f"report_{tag}_s{self.session_idx:05d}.csv"
-        return f"report_s{self.session_idx:05d}.csv"
+        path = self.ckpt_dir / fname
 
-    def _generate_unique_formations(self, n: int) -> List[int]:
-        """Generate N new unique formations (by key), update registries, return ids."""
-        new_ids: List[int] = []
-        attempts = 0
-        max_attempts = n * 200
+        with open(path, "wb") as f:
+            pickle.dump(self, f)
 
-        while len(new_ids) < n:
-            attempts += 1
-            if attempts > max_attempts:
-                raise RuntimeError(
-                    f"Failed to generate {n} unique formations. Pool too small or too many duplicates. "
-                    f"Generated {len(new_ids)} after {attempts} attempts."
-                )
-
-            names = self.rng.sample(self.card_names, k=3)
-            key = formation_key(names)
-            if key in self.seen_keys:
-                continue
-
-            fid = self.next_formation_id
-            self.next_formation_id += 1
-            self.seen_keys.add(key)
-            self.formations[fid] = Formation(id=fid, key=key)
-            new_ids.append(fid)
-
-        return new_ids
-
-    def _ensure_matches_for_new_ids(self, new_ids: Sequence[int]) -> None:
-        """Compute match results for each new formation vs every formation in current pool.
-
-        Efficiency rule: only do (new vs all (old + new)),
-        skipping self-match and skipping already-cached pairs.
-        """
-        pool = list(self.pool_ids)
-        for a in new_ids:
-            for b in pool:
-                if a == b:
-                    continue  # self-match excluded (always draw)
-                pk = pair_key(a, b)
-                if pk in self.match_cache:
-                    continue
-                self._simulate_and_store(a, b)
-
-    def _simulate_and_store(self, a_id: int, b_id: int) -> None:
-        """Simulate 1v1 between formation a and b, store in cache."""
-        a = self.formations[a_id]
-        b = self.formations[b_id]
-
-        p1 = Player("A", [self.cards_by_name[n] for n in a.names])
-        p2 = Player("B", [self.cards_by_name[n] for n in b.names])
-        res = Game([p1, p2]).run()
-        out_a = res.outcomes[0]
-        v = outcome_to_int(out_a)
-
-        pk = pair_key(a_id, b_id)
-        min_id, _max_id = pk
-        # store from min_id perspective
-        if a_id == min_id:
-            self.match_cache[pk] = v
-        else:
-            self.match_cache[pk] = -v
-
-    def _accumulate(self, st: FormationStats, out: Result) -> None:
-        if out == Result.WIN:
-            st.wins += 1
-        elif out == Result.DRAW:
-            st.draws += 1
-        else:
-            st.losses += 1
+        with open(self.run_dir / "latest.txt", "w") as f:
+            f.write(str(path))
