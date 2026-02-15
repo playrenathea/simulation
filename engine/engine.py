@@ -494,9 +494,19 @@ class Game:
             else:
                 outcomes = [Result.DRAW, Result.DRAW]
         else:
-            mx = max(scores) if scores else 0
-            for s in scores:
-                outcomes.append(Result.WIN if s == mx else Result.LOSE)
+            if not scores:
+                outcomes = []
+            else:
+                mx = max(scores)
+                winners = [i for i, s in enumerate(scores) if s == mx]
+
+                if len(winners) == 1:
+                    # unique winner -> WIN for winner, LOSE for others
+                    outcomes = [Result.LOSE for _ in scores]
+                    outcomes[winners[0]] = Result.WIN
+                else:
+                    # tie at top -> everyone DRAW (jadul behavior)
+                    outcomes = [Result.DRAW for _ in scores]
 
         return MatchResult(outcomes=outcomes, scores=scores)
 
