@@ -109,7 +109,16 @@ class Runner:
             self.rng.seed(params["seed"])
 
         self.run_id = time.strftime("%Y%m%d-%H%M%S")
-        self.run_dir = Path("runs/top_formation") / self.run_id
+        
+        # If running on Colab + Drive mounted, save to Drive for persistence.
+        drive_base = Path("/content/drive/MyDrive/renathea_runs")
+        if drive_base.exists():
+            base = drive_base
+        else:
+            base = Path("runs")  # fallback local
+        
+        self.run_dir = base / "top_formation" / self.run_id
+        
         self.ckpt_dir = self.run_dir / "checkpoints"
         self.report_dir = self.run_dir / "reports"
 
