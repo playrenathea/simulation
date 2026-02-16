@@ -198,18 +198,25 @@ class Runner:
         """
         save_to_drive:
           - "auto": use Drive if mounted, else local runs/
-          - "yes": require Drive (fallback to local if missing, but we try)
+          - "yes": force Drive if mounted
           - "no": always local runs/
         """
+    
         local = Path("runs")
-        drive_base = Path("/content/drive/MyDrive/renathea_runs")
-
+        mydrive = Path("/content/drive/MyDrive")
+        drive_base = mydrive / "renathea_runs"
+    
+        # Always local if explicitly no
         if save_to_drive == "no":
             return local
-        if save_to_drive == "yes":
-            return drive_base if drive_base.exists() else local
-        # auto
-        return drive_base if drive_base.exists() else local
+    
+        # If Drive is mounted, use it and create folder if needed
+        if mydrive.exists():
+            drive_base.mkdir(parents=True, exist_ok=True)
+            return drive_base
+    
+        # Fallback to local
+        return local
 
     @classmethod
     def resume(cls, checkpoint_path: str | Path, cards: Sequence[Card]) -> "Runner":
