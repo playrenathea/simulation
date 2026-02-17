@@ -176,8 +176,8 @@
       },
       {
         "type": "Powerup",
-        "text": "POWERUP (+6).",
-        "value": 6
+        "text": "POWERUP (+5).",
+        "value": 5
       }
     ]
   },
