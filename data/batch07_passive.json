@@ -74,7 +74,7 @@
     "skills": [
       {
         "type": "Passive",
-        "text": "PASSIVE: Total Power kamu +7",
+        "text": "PASSIVE: Total Power kamu +5",
         "passive": "chanter"
       }
     ]
