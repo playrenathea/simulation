@@ -382,7 +382,7 @@ class Resolver:
                     entry.powerup_while_silenced = True
 
                 elif sk.passive == Passive.CHANTER:
-                    state.owner_power_bonus[owner] += 7
+                    state.owner_power_bonus[owner] += 5
 
                 elif sk.passive == Passive.DEFLECTOR:
                     entry.has_deflector = True
