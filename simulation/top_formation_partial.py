@@ -3,11 +3,12 @@ top_formation_partial.py
 
 Partitioned Top-Formation Evolution (disjoint worlds)
 
-Improvements:
-- Each world only uses its own card subset
-- Progress print per session
-- Duel estimator before run
-- Safer defaults
+Behavior:
+- Cards split once into X partitions (no cross mixing)
+- 1 session = all worlds step once
+- Only print at report milestones (like top_formation.py)
+- 1 checkpoint per milestone
+- X CSV reports per milestone (one per world)
 """
 
 from __future__ import annotations
@@ -56,16 +57,30 @@ def run(cards: Sequence[Card], params):
     if isinstance(resume_path, str) and resume_path.strip() == "":
         resume_path = None
 
+    sessions_to_run = int(params["sessions"])
+
     if resume_path:
         runner = MultiRunner.resume(resume_path, cards)
-        print("Resumed from:", resume_path)
+        print("------------------------------------------------------------")
+        print("Mode: RESUME")
+        print("Resume from:", resume_path)
     else:
         runner = MultiRunner(cards, params)
         runner.initialize()
+        print("------------------------------------------------------------")
+        print("Mode: NEW RUN")
 
-    runner.estimate_runtime(params["sessions"])
-    runner.step(int(params["sessions"]))
-    print("Run directory:", runner.run_dir)
+    target_session = runner.session + sessions_to_run
+
+    print("Run dir:", runner.run_dir)
+    print("Start session:", runner.session)
+    print("Target session:", target_session)
+    print("------------------------------------------------------------")
+
+    runner.step(sessions_to_run, target_session=target_session)
+
+    print("------------------------------------------------------------")
+    print("DONE. Run directory:", runner.run_dir)
     return runner
 
 
@@ -92,10 +107,11 @@ class Checkpoint:
 
 
 # ==========================================================
-# Multi Runner
+# Runner
 # ==========================================================
 
 class MultiRunner:
+
     def __init__(self, cards: Sequence[Card], params):
 
         self.cards_by_name = {c.name: c for c in cards}
@@ -117,6 +133,7 @@ class MultiRunner:
         self.run_dir = (base / "top_formation_partial" / self.run_id).resolve()
         self.ckpt_dir = self.run_dir / "checkpoints"
         self.report_dir = self.run_dir / "reports"
+
         self.ckpt_dir.mkdir(parents=True, exist_ok=True)
         self.report_dir.mkdir(parents=True, exist_ok=True)
 
@@ -150,16 +167,13 @@ class MultiRunner:
     # ==========================================================
 
     def initialize(self):
+
         names = list(self.all_card_names)
         self.rng.shuffle(names)
 
         groups = [[] for _ in range(self.partitions)]
         for i, nm in enumerate(names):
             groups[i % self.partitions].append(nm)
-
-        for idx, g in enumerate(groups, start=1):
-            if len(g) < 3:
-                raise ValueError(f"Partition {idx} too small.")
 
         self.worlds = []
         for wid, g in enumerate(groups, start=1):
@@ -191,38 +205,32 @@ class MultiRunner:
         return WorldState(wid, card_names, meta, window, meta_cache)
 
     # ==========================================================
-    # Runtime estimator
-    # ==========================================================
-
-    def estimate_runtime(self, sessions):
-        duel_per_world = (
-            self.add_per_session * self.keep_top +
-            (self.add_per_session * (self.add_per_session - 1)) // 2
-        )
-        duel_per_session = duel_per_world * len(self.worlds)
-        total_duel = duel_per_session * sessions
-
-        print("Estimated duels:", total_duel)
-
-    # ==========================================================
     # Step
     # ==========================================================
 
-    def step(self, n):
+    def step(self, n: int, target_session: Optional[int] = None):
 
         for _ in range(n):
-            start = time.time()
+
             self.session += 1
 
             for world in self.worlds:
                 self._step_world(world)
 
-            elapsed = time.time() - start
-            print(f"Session {self.session} done in {elapsed:.2f}s")
-
             if self.session % self.report_every == 0:
-                self._save()
-                self._report()
+
+                ckpt_path = self._save()
+                report_paths = self._report()
+
+                total_str = f"/{target_session}" if target_session else ""
+                print(f"Session {self.session}{total_str} ✅", flush=True)
+                print(f"Latest report: {report_paths[0]}", flush=True)
+                print(f"Latest checkpoint: {ckpt_path}", flush=True)
+                print("------------------------------------------------------------", flush=True)
+
+    # ==========================================================
+    # World Step
+    # ==========================================================
 
     def _step_world(self, world):
 
@@ -238,9 +246,10 @@ class MultiRunner:
         for i in range(len(window)):
             for j in range(i + 1, len(window)):
                 a, b = window[i], window[j]
-                if pair_key(a, b) not in session_cache:
+                pk = pair_key(a, b)
+                if pk not in session_cache:
                     out = self._simulate_pair(a, b)
-                    session_cache[pair_key(a, b)] = out if a < b else -out
+                    session_cache[pk] = out if a < b else -out
 
         ranked = self._rank(window, session_cache)
         new_meta = [k for k, _ in ranked[: self.keep_top]]
@@ -304,7 +313,7 @@ class MultiRunner:
     # Save / Report
     # ==========================================================
 
-    def _save(self):
+    def _save(self) -> str:
         path = self.ckpt_dir / f"ckpt_s{self.session:05d}.pkl"
         ckpt = Checkpoint(
             session=self.session,
@@ -316,8 +325,11 @@ class MultiRunner:
         with open(path, "wb") as f:
             pickle.dump(ckpt, f)
         (self.run_dir / "latest.txt").write_text(str(path))
+        return str(path)
 
-    def _report(self):
+    def _report(self) -> List[str]:
+        out_paths = []
+
         for world in self.worlds:
             path = self.report_dir / f"report_world{world.world_id}_s{self.session:05d}.csv"
             with open(path, "w", newline="") as f:
@@ -325,3 +337,6 @@ class MultiRunner:
                 w.writerow(["world", "session", "rank", "card1", "card2", "card3"])
                 for r, k in enumerate(world.meta[: self.keep_top], start=1):
                     w.writerow([world.world_id, self.session, r, k[0], k[1], k[2]])
+            out_paths.append(str(path))
+
+        return out_paths
