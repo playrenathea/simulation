@@ -3,12 +3,7 @@ top_formation_partial.py
 
 Partitioned Top-Formation Evolution (disjoint worlds)
 
-Behavior:
-- Cards split once into X partitions (no cross mixing)
-- 1 session = all worlds step once
-- Only print at report milestones (like top_formation.py)
-- 1 checkpoint per milestone
-- X CSV reports per milestone (one per world)
+Resume-safe version.
 """
 
 from __future__ import annotations
@@ -100,6 +95,11 @@ class WorldState:
 @dataclass
 class Checkpoint:
     session: int
+    keep_top: int
+    add_per_session: int
+    report_every: int
+    partitions: int
+    seed: Optional[int]
     worlds: List[WorldState]
     rng_state: object
     run_id: str
@@ -141,25 +141,39 @@ class MultiRunner:
         self.worlds: List[WorldState] = []
 
     # ==========================================================
-    # Resume
+    # Resume FIXED
     # ==========================================================
 
     @classmethod
     def resume(cls, path, cards):
+
         with open(path, "rb") as f:
             ckpt: Checkpoint = pickle.load(f)
 
         runner = cls.__new__(cls)
+
         runner.cards_by_name = {c.name: c for c in cards}
         runner.all_card_names = list(runner.cards_by_name.keys())
+
+        # RESTORE PARAMETERS
+        runner.keep_top = ckpt.keep_top
+        runner.add_per_session = ckpt.add_per_session
+        runner.report_every = ckpt.report_every
+        runner.partitions = ckpt.partitions
+        runner.seed = ckpt.seed
+        runner.save_to_drive = "auto"
+
         runner.session = ckpt.session
         runner.worlds = ckpt.worlds
+
         runner.rng = random.Random()
         runner.rng.setstate(ckpt.rng_state)
+
         runner.run_id = ckpt.run_id
         runner.run_dir = Path(ckpt.run_dir)
         runner.ckpt_dir = runner.run_dir / "checkpoints"
         runner.report_dir = runner.run_dir / "reports"
+
         return runner
 
     # ==========================================================
@@ -317,19 +331,23 @@ class MultiRunner:
         path = self.ckpt_dir / f"ckpt_s{self.session:05d}.pkl"
         ckpt = Checkpoint(
             session=self.session,
+            keep_top=self.keep_top,
+            add_per_session=self.add_per_session,
+            report_every=self.report_every,
+            partitions=self.partitions,
+            seed=self.seed,
             worlds=self.worlds,
             rng_state=self.rng.getstate(),
             run_id=self.run_id,
             run_dir=str(self.run_dir),
         )
         with open(path, "wb") as f:
-            pickle.dump(ckpt, f)
+            pickle.dump(ckpt, f, protocol=pickle.HIGHEST_PROTOCOL)
         (self.run_dir / "latest.txt").write_text(str(path))
         return str(path)
 
     def _report(self) -> List[str]:
         out_paths = []
-
         for world in self.worlds:
             path = self.report_dir / f"report_world{world.world_id}_s{self.session:05d}.csv"
             with open(path, "w", newline="") as f:
@@ -338,5 +356,4 @@ class MultiRunner:
                 for r, k in enumerate(world.meta[: self.keep_top], start=1):
                     w.writerow([world.world_id, self.session, r, k[0], k[1], k[2]])
             out_paths.append(str(path))
-
         return out_paths
