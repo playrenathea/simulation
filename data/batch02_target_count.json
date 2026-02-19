@@ -139,11 +139,14 @@
     "skills": [
       {
         "type": "Powerup",
-        "text": "POWERUP (+2) per tiap kartu ter-silence di seluruh Arena",
-        "value": 2,
+        "text": "POWERUP (+3) per tiap kartu ter-silence di seluruh Arena",
+        "value": 3,
         "count": {
           "mode": "Card",
-          "card_filter": { "zones": ["Arena"], "status": "Silenced" }
+          "card_filter": {
+            "zones": ["Arena"],
+            "status": "Silenced"
+          }
         }
       }
     ]
