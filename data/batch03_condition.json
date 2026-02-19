@@ -557,7 +557,7 @@
     ]
   },
   {
-    "name": "Messenger",
+    "name": "Agent",
     "roles": ["Support", "Agility"],
     "raw_power": 0,
     "skills": [
