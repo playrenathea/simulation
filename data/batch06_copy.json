@@ -31,13 +31,15 @@
   {
     "name": "Dancer",
     "roles": ["Support", "Agility"],
-    "raw_power": 1,
+    "raw_power": 2,
     "skills": [
       {
         "type": "Copy",
         "text": "COPY skill Silence dan Protect di seluruh Arena.",
         "skill_filter": {
-          "card_filter": { "zones": ["Arena"] },
+          "card_filter": {
+            "zones": ["Arena"]
+          },
           "include": ["Silence", "Protect"]
         }
       }
