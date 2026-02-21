@@ -359,7 +359,27 @@
           "mode": "Absence",
           "left": {
             "mode": "Card",
-            "card_filter": { "side": "Opponent", "zones": ["Arena"], "roles": ["Support"] }
+            "card_filter": {
+              "side": "Opponent",
+              "zones": ["Arena"],
+              "roles": ["Support"]
+            }
+          }
+        }
+      },
+      {
+        "type": "Powerup",
+        "text": "POWERUP (+3) jika TIDAK ada Support di Arena kamu.",
+        "value": 3,
+        "condition": {
+          "mode": "Absence",
+          "left": {
+            "mode": "Card",
+            "card_filter": {
+              "side": "You",
+              "zones": ["Arena"],
+              "roles": ["Support"]
+            }
           }
         }
       }
