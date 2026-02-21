@@ -347,14 +347,18 @@
     ]
   },
   {
-    "name": "Intercessor",
-    "roles": ["Support", "Tank"],
-    "raw_power": 3,
+    "name": "Shadowblade",
+    "roles": ["Agility"],
+    "raw_power": 2,
     "skills": [
       {
-        "type": "Protect",
-        "text": "PROTECT kartu yang ter-silence di Arena kamu!",
-        "target": { "side": "You", "zones": ["Arena"], "status": "Silenced" }
+        "type": "Silence",
+        "text": "SILENCE Ranged, Magic, dan Support di Arena lawan!",
+        "target": {
+          "side": "Opponent",
+          "zones": ["Arena"],
+          "roles": ["Ranged", "Magic", "Support"]
+        }
       }
     ]
   },
